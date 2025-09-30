@@ -1,0 +1,35 @@
+# Core ML libraries
+torch
+transformers
+accelerate
+python-dotenv
+
+# CUDA acceleration and quantization
+bitsandbytes
+
+# Intel CPU optimizations (Linux x86_64 only, not available on ARM/Mac)
+intel-extension-for-pytorch>=2.1.0; platform_machine == "x86_64" and sys_platform == "linux" 
+
+# System utilities
+psutil
+
+# Web browsing and scraping
+beautifulsoup4
+lxml[html_clean]
+html2text
+selenium
+playwright
+aiohttp
+asyncio-throttle
+
+# URL parsing and validation
+validators
+furl
+
+# User agent rotation and stealth browsing
+fake-useragent
+
+# Memory module dependencies
+sentence-transformers
+numpy
+faiss-cpu
