@@ -17,14 +17,16 @@ logger = logging.getLogger(__name__)
 class ModelHandler:
     """Handle LLM operations for memory tool."""
     
-    def __init__(self, model_path: str, n_ctx: int = 32768, n_threads: int = 4):
+    def __init__(self, model_path: str, n_ctx: int = 32768, n_threads: int = 4, n_gpu_layers: int = -1):
         """
         Initialize the model handler.
         
         Args:
             model_path: Path to GGUF model (required)
             n_ctx: Context size (default: 32768, Granite 4.0 supports up to 128K but GGUF may have limits)
-            n_threads: Number of threads
+            n_threads: Number of threads (default: 4)
+            n_gpu_layers: Number of layers to offload to GPU (default: -1 = all layers, 0 = CPU only)
+                         Falls back to CPU if GPU support is not available
         """
         if not model_path:
             raise ValueError("model_path is required")
@@ -37,10 +39,15 @@ class ModelHandler:
             model_path=str(model_path),
             n_ctx=n_ctx,
             n_threads=n_threads,
-            n_gpu_layers=-1,  # -1 = offload all layers to GPU (Metal on macOS)
+            n_gpu_layers=n_gpu_layers,  # -1 = all layers to GPU, 0 = CPU only
             verbose=False
         )
-        logger.info(f"✓ Model loaded (context: {n_ctx} tokens, GPU: Metal)")
+        
+        # Log acceleration info
+        gpu_info = "GPU acceleration enabled" if n_gpu_layers != 0 else "CPU only"
+        if n_gpu_layers != 0:
+            gpu_info += " (will fall back to CPU if GPU unavailable)"
+        logger.info(f"✓ Model loaded (context: {n_ctx} tokens, {gpu_info})")
     
     def reset_state(self, deep_clean: bool = False):
         """

@@ -162,6 +162,13 @@ Examples:
     )
     
     parser.add_argument(
+        "--gpu-layers",
+        type=int,
+        default=-1,
+        help="Number of layers to offload to GPU (default: -1 = all, 0 = CPU only)"
+    )
+    
+    parser.add_argument(
         "--memory-dir",
         type=str,
         default="data/tools/memory",
@@ -211,7 +218,11 @@ Examples:
         
         # Initialize model handler
         print("\n1️⃣  Loading model handler...")
-        model_handler = ModelHandler(model_path=args.model, n_ctx=args.context)
+        model_handler = ModelHandler(
+            model_path=args.model,
+            n_ctx=args.context,
+            n_gpu_layers=args.gpu_layers
+        )
         actual_ctx = model_handler.llm.n_ctx()
         print(f"   ✓ Model handler ready (context: {actual_ctx:,} tokens)")
         

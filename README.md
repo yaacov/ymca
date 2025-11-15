@@ -100,6 +100,23 @@ CMAKE_ARGS="-DGGML_VULKAN=on" pip install --upgrade --force-reinstall llama-cpp-
 
 > **Note:** After installing with hardware acceleration, ensure your virtual environment is activated, then reinstall YMCA: `pip install -e .`
 
+### GPU Support
+
+YMCA attempts to use GPU acceleration by default but automatically falls back to CPU if unavailable:
+
+```bash
+# Default: Use GPU if available, CPU otherwise
+ymca-chat
+ymca-web
+
+# Force CPU-only execution
+ymca-chat --gpu-layers 0
+ymca-web --gpu-layers 0
+
+# Partial GPU offloading (for limited VRAM)
+ymca-chat --gpu-layers 20
+```
+
 ## Quick Start
 
 > **Note:** Make sure your virtual environment is activated before running any YMCA commands:

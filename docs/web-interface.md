@@ -41,7 +41,7 @@ ymca-web \
   --model path/to/model.gguf \
   --port 8080 \
   --system-prompt @custom-prompt.txt \
-  --enable-memory \
+  --memory-dir data/memory \
   --context 32768
 ```
 
@@ -84,26 +84,21 @@ pip install -e ".[dev]"
 ```bash
 ymca-web --model PATH            # Path to GGUF model file
 ymca-web --context SIZE          # Context window size in tokens (default: 32768)
-ymca-web --gpu-layers N          # Number of layers to offload to GPU (default: -1 = all)
-ymca-web --threads N             # Number of CPU threads (default: auto)
+ymca-web --gpu-layers N          # Number of layers to offload to GPU (default: -1 = all, 0 = CPU only)
+                                 # Falls back to CPU if GPU support unavailable
 ```
 
 ### Server Configuration
 
 ```bash
-ymca-web --host HOST             # Server host (default: localhost)
+ymca-web --host HOST             # Server host (default: 127.0.0.1)
 ymca-web --port PORT             # Server port (default: 8000)
-ymca-web --reload                # Enable auto-reload for development
 ```
 
-### Feature Flags
+### Memory Configuration
 
 ```bash
-ymca-web --enable-memory         # Enable semantic memory tool
 ymca-web --memory-dir DIR        # Memory storage directory (default: data/tools/memory)
-ymca-web --enable-planning       # Enable multi-step planning (default: enabled)
-ymca-web --enable-tool-selector  # Enable intelligent tool selection (default: enabled)
-ymca-web --max-tool-selector N   # Max tools to select (default: 3)
 ```
 
 ### System Prompt
@@ -130,7 +125,7 @@ ymca-web \
 
 ```bash
 ymca-web --verbose               # Enable verbose logging
-ymca-web --log-file FILE         # Write logs to file
+ymca-web --debug                 # Enable debug mode
 ```
 
 ## API Endpoints
@@ -249,8 +244,8 @@ Adjust settings in the web interface:
 
 ### Development Mode
 
-For local development with auto-reload:
+For local development with verbose logging:
 
 ```bash
-ymca-web --reload --verbose
+ymca-web --verbose --debug
 ```
