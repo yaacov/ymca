@@ -86,7 +86,7 @@ def cmd_store(args):
         overlap=args.overlap
     )
     
-    print(f"\n✓ Stored: {result['chunks_stored']} chunks")
+    print(f"\nStored: {result['chunks_stored']} chunks")
     print(f"  Questions generated: {result['questions_generated']}")
     print(f"  Total chunks in memory: {result['total_chunks']}")
 
@@ -108,10 +108,10 @@ def cmd_retrieve(args):
     results = memory.retrieve_memory(args.query, top_k=args.top_k)
     
     if not results:
-        print("\n⚠️  No results found")
+        print("\nNo results found")
         return
     
-    print(f"\n✓ Found {len(results)} result(s):\n")
+    print(f"\nFound {len(results)} result(s):\n")
     
     for i, result in enumerate(results, 1):
         print(f"{'=' * 70}")
@@ -129,12 +129,12 @@ def cmd_clear(args):
     # Check if exists
     memory_path = Path(args.memory_dir)
     if not memory_path.exists():
-        print("✓ Memory directory doesn't exist - nothing to clear")
+        print("Memory directory doesn't exist - nothing to clear")
         return
     
     # Confirm unless --force
     if not args.force:
-        response = input("\n⚠️  This will delete all stored memories! Continue? (yes/no): ").strip().lower()
+        response = input("\nWARNING: This will delete all stored memories! Continue? (yes/no): ").strip().lower()
         if response not in ['yes', 'y']:
             print("Cancelled.")
             return
@@ -150,7 +150,7 @@ def cmd_clear(args):
     
     print("Clearing memory...")
     memory.clear_memory()
-    print("\n✓ Memory cleared successfully!")
+    print("\nMemory cleared successfully!")
 
 
 def cmd_list(args):
@@ -175,7 +175,7 @@ def cmd_list(args):
     all_chunks = memory.storage.get_all_chunks()
     
     if not all_chunks:
-        print("\n⚠️  No chunks stored in memory")
+        print("\nNo chunks stored in memory")
         return
     
     # Filter by source if specified
@@ -187,7 +187,7 @@ def cmd_list(args):
         all_chunks = [c for c in all_chunks if args.file in c.get('source', '')]
     
     if not all_chunks:
-        print(f"\n⚠️  No chunks found matching filters")
+        print(f"\nNo chunks found matching filters")
         return
     
     print(f"\n{'=' * 70}")
@@ -248,7 +248,7 @@ def cmd_stats(args):
     # Check if exists
     memory_path = Path(args.memory_dir)
     if not memory_path.exists():
-        print("⚠️  Memory directory doesn't exist")
+        print("Memory directory doesn't exist")
         return
     
     # Initialize
@@ -292,11 +292,11 @@ def cmd_load_docs(args):
     docs_path = Path(args.docs_dir)
     
     if not docs_path.exists():
-        print(f"✗ Directory not found: {docs_path}")
+        print(f"Error: Directory not found: {docs_path}")
         return 1
     
     if not docs_path.is_dir():
-        print(f"✗ Not a directory: {docs_path}")
+        print(f"Error: Not a directory: {docs_path}")
         return 1
     
     print("=" * 70)
@@ -312,7 +312,7 @@ def cmd_load_docs(args):
     # Find files
     md_files = list(docs_path.glob(args.pattern))
     if not md_files:
-        print(f"\n✗ No files matching '{args.pattern}' found")
+        print(f"\nError: No files matching '{args.pattern}' found")
         return 1
     
     print(f"\nFound {len(md_files)} file(s)")
@@ -345,7 +345,7 @@ def cmd_load_docs(args):
                 content = f.read()
             
             if not content.strip():
-                print("   ⚠️  Empty file, skipping")
+                print("   Empty file, skipping")
                 continue
             
             result = memory.store_memory(
@@ -367,7 +367,7 @@ def cmd_load_docs(args):
                 if chunks_failed > 0:
                     status_parts.append(f"{chunks_failed} failed")
                 
-                print(f"   ✓ {', '.join(status_parts)}")
+                print(f"   {', '.join(status_parts)}")
                 total_chunks += chunks_stored
                 total_complete += chunks_complete
                 total_failed_chunks += chunks_failed
@@ -378,10 +378,10 @@ def cmd_load_docs(args):
                     for chunk_id, error in result['failed_details']:
                         all_failed_details.append((md_file.name, chunk_id, error))
             else:
-                print(f"   ⚠️  No new chunks (duplicates)")
+                print(f"   No new chunks (duplicates)")
             
         except Exception as e:
-            print(f"   ✗ Error: {e}")
+            print(f"   Error: {e}")
             failed += 1
     
     # Summary
@@ -524,7 +524,7 @@ def main():
         print("\n\nInterrupted by user")
         return 130
     except Exception as e:
-        print(f"\n✗ Error: {e}")
+        print(f"\nError: {e}")
         if args.verbose:
             import traceback
             traceback.print_exc()

@@ -44,12 +44,12 @@ class MemoryTool:
                     "description": (
                         "Detailed technical question to search for in documentation. "
                         "BE SPECIFIC for better results:\n"
-                        "✓ GOOD: 'how to configure authentication with step by step examples'\n"
-                        "✓ GOOD: 'troubleshooting connection errors with detailed logs'\n"
-                        "✓ GOOD: 'API parameters and configuration options reference'\n"
-                        "✗ BAD: 'authentication' (too vague)\n"
-                        "✗ BAD: 'configuration' (too general)\n"
-                        "✗ BAD: 'help' (not specific)\n"
+                        "GOOD: 'how to configure authentication with step by step examples'\n"
+                        "GOOD: 'troubleshooting connection errors with detailed logs'\n"
+                        "GOOD: 'API parameters and configuration options reference'\n"
+                        "BAD: 'authentication' (too vague)\n"
+                        "BAD: 'configuration' (too general)\n"
+                        "BAD: 'help' (not specific)\n"
                         "Include: HOW-TO keywords, action verbs (configure/setup/troubleshoot), specific components"
                     )
                 },
@@ -131,7 +131,7 @@ class MemoryTool:
             model_handler=model_handler
         )
         
-        logger.info("✓ Using model handler for semantic summary generation")
+        logger.info("Using model handler for semantic summary generation")
     
     def _process_chunk_embedding(self, chunk_text: str, chunk_id: int, max_retries: int = 3) -> tuple:
         """
@@ -302,7 +302,7 @@ class MemoryTool:
             
             if success:
                 self.storage.mark_chunk_complete(chunk_id, questions=questions)
-                logger.debug(f"✓ Chunk {chunk_id} completed on retry")
+                logger.debug(f"Chunk {chunk_id} completed on retry")
             else:
                 still_pending.append((chunk_id, chunk_text, error or prev_error))
         
@@ -333,7 +333,7 @@ class MemoryTool:
         """Clear all stored memories."""
         self.storage.clear()
         self.vector_store.clear()
-        logger.info("✓ Memory cleared")
+        logger.info("Memory cleared")
     
     def get_stats(self) -> Dict:
         """Get memory statistics."""

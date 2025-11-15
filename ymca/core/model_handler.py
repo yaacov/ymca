@@ -47,7 +47,7 @@ class ModelHandler:
         gpu_info = "GPU acceleration enabled" if n_gpu_layers != 0 else "CPU only"
         if n_gpu_layers != 0:
             gpu_info += " (will fall back to CPU if GPU unavailable)"
-        logger.info(f"✓ Model loaded (context: {n_ctx} tokens, {gpu_info})")
+        logger.info(f"Model loaded (context: {n_ctx} tokens, {gpu_info})")
     
     def reset_state(self, deep_clean: bool = False):
         """

@@ -55,7 +55,7 @@ class ModelDownloader:
                 force_download=force_download
             )
             
-            logger.info(f"✓ Model downloaded: {local_dir}")
+            logger.info(f"Model downloaded: {local_dir}")
             return Path(local_dir)
             
         except Exception as e:

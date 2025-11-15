@@ -53,7 +53,7 @@ class Embedder:
         self.model = SentenceTransformer(model_name, cache_folder=cache_folder, device=device)
         self.device = device
         
-        logger.info("✓ Embedding model loaded")
+        logger.info("Embedding model loaded")
     
     def embed(self, texts: List[str]) -> np.ndarray:
         """

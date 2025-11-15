@@ -64,7 +64,7 @@ class LlamaCppConverter:
                         base_output.unlink()
                         logger.info(f"Removed intermediate file: {base_output}")
                 
-                logger.info(f"✓ GGUF conversion completed: {final_output}")
+                logger.info(f"GGUF conversion completed: {final_output}")
                 return final_output
             else:
                 logger.warning("llama.cpp not found. Please install it to enable conversion.")
@@ -127,7 +127,7 @@ class LlamaCppConverter:
             logger.error(f"Conversion failed: {result.stderr}")
             raise RuntimeError(f"GGUF conversion failed: {result.stderr}")
         
-        logger.info("✓ Model converted to GGUF format")
+        logger.info("Model converted to GGUF format")
     
     def _run_quantization(self, input_file: Path, output_file: Path, quantization: str):
         """Run llama.cpp quantization tool."""
@@ -148,7 +148,7 @@ class LlamaCppConverter:
             logger.error(f"Quantization failed: {result.stderr}")
             raise RuntimeError(f"Quantization failed: {result.stderr}")
         
-        logger.info(f"✓ Model quantized with {quantization}")
+        logger.info(f"Model quantized with {quantization}")
     
     def _find_convert_script(self) -> Path:
         """Find the conversion script in llama.cpp directory."""
@@ -228,7 +228,7 @@ class LlamaCppConverter:
         if result.returncode != 0:
             raise RuntimeError(f"CMake build failed: {result.stderr}")
         
-        logger.info("✓ Built llama.cpp")
+        logger.info("Built llama.cpp")
     
     def _create_instructions(
         self,

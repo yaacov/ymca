@@ -180,7 +180,7 @@ class ChunkStorage:
                 if c['id'] not in orphaned
             ]
             self._save_metadata()
-            logger.info(f"✓ Removed {len(orphaned)} orphaned metadata entries")
+            logger.info(f"Removed {len(orphaned)} orphaned metadata entries")
         
         # Ensure all chunks have a status field (for backwards compatibility)
         updated = False
@@ -191,7 +191,7 @@ class ChunkStorage:
         
         if updated:
             self._save_metadata()
-            logger.info("✓ Updated chunk metadata with status fields")
+            logger.info("Updated chunk metadata with status fields")
     
     def clear(self):
         """Clear all stored chunks."""

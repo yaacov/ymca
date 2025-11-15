@@ -58,11 +58,11 @@ def main():
                 quantization=args.quantize,
                 output_type=args.output_type
             )
-            logger.info(f"✓ GGUF file: {gguf_path}")
+            logger.info(f"GGUF file: {gguf_path}")
         
         # Print footer
         logger.info("=" * 60)
-        logger.info("✓ Conversion completed successfully!")
+        logger.info("Conversion completed successfully!")
         logger.info("=" * 60)
         
     except KeyboardInterrupt:

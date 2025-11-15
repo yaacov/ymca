@@ -30,7 +30,8 @@ from ymca.core.ui import (
     print_user_input,
     print_assistant_response,
     print_system_message,
-    print_tool_call
+    print_tool_call,
+    console
 )
 from ymca.tools.memory.tool import MemoryTool
 from ymca.tools.mcp.client import MCPClient
@@ -47,24 +48,24 @@ class StyledLogHandler(logging.Handler):
         # Style tool-related messages
         if "Parsed tool call:" in msg:
             tool_name = msg.split("Parsed tool call:", 1)[1].strip()
-            print_system_message(f"Parsed tool call: {tool_name}", style="dim yellow")
+            print_system_message(f"Parsed tool call: {tool_name}", style="dim")
         elif "Calling tool:" in msg:
             tool_name = msg.split("Calling tool:", 1)[1].strip()
             print_tool_call(tool_name, status="calling")
         elif "Calling MCP tool:" in msg:
             tool_name = msg.split("Calling MCP tool:", 1)[1].strip()
-            print_system_message(f"Calling MCP tool: {tool_name}", style="bold yellow")
+            print_system_message(f"Calling MCP tool: {tool_name}", style="dim")
         elif "Answer refinement completed" in msg:
-            print_system_message("Answer refinement completed ✓", style="dim green")
+            print_system_message("Answer refinement completed", style="dim")
         elif "Answer refinement failed" in msg:
-            print_system_message("Answer refinement skipped (using original response)", style="dim yellow")
+            print_system_message("Answer refinement skipped (using original response)", style="dim")
         elif record.levelno == logging.WARNING and "Answer refinement" in msg:
             # Skip duplicate refinement warnings (already handled above)
             pass
         elif record.levelno == logging.ERROR:
             print_system_message(f"Error: {msg}", style="bold red")
         elif record.levelno == logging.WARNING and not msg.startswith("Answer refinement"):
-            print_system_message(f"Warning: {msg}", style="yellow")
+            print_system_message(f"Warning: {msg}", style="dim")
         # Skip debug messages unless verbose mode
         elif record.levelno > logging.DEBUG:
             print_system_message(msg, style="dim")
@@ -133,13 +134,13 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
     """Interactive chat mode with enhanced input."""
     print_section("INTERACTIVE CHAT")
     
-    print("\n💬 Commands:")
+    console.print("\nCommands:", style="dim yellow")
     print("  - Type your message to chat")
     print("  - 'clear'   - Clear conversation history")
     print("  - 'summary' - Show conversation summary")
     print("  - 'export'  - Export conversation")
     print("  - 'quit'    - Exit (or Ctrl+C)")
-    print("\n💡 Tips:")
+    console.print("\nTips:", style="dim yellow")
     print("  - The assistant can search memory if data is loaded")
     print("  - Use ↑/↓ arrow keys to navigate history")
     print("  - Press Ctrl+R to search history")
@@ -160,7 +161,8 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
     )
     
     prompt_style = PromptStyle.from_dict({
-        '': 'bold cyan',  # User input
+        '': '',  # User input - default terminal color (less colorful)
+        'prompt': 'fg:ansiyellow',  # "You:" label in dim yellow
     })
     
     session = PromptSession(
@@ -173,34 +175,39 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
     
     while True:
         try:
-            user_input = session.prompt("\n🧑 You: ").strip()
+            # Create a styled prompt with dim yellow "You:"
+            from prompt_toolkit.formatted_text import FormattedText
+            prompt_text = FormattedText([
+                ('class:prompt', '\nYou: '),
+            ])
+            user_input = session.prompt(prompt_text).strip()
             
             if not user_input:
                 continue
             
             # Handle commands
             if user_input.lower() in ['quit', 'exit', 'q']:
-                print("\n👋 Goodbye!")
+                print("\nGoodbye!")
                 break
             
             elif user_input.lower() == 'clear':
                 chat.clear_history()
-                print_system_message("Conversation history cleared", style="bold green")
+                print_system_message("Conversation history cleared", style="dim")
                 continue
             
             elif user_input.lower() == 'summary':
-                print_system_message("Conversation Summary:", style="bold blue")
+                print_system_message("Conversation Summary:", style="dim")
                 print(chat.get_history_summary())
                 continue
             
             elif user_input.lower() == 'export':
                 conversation = chat.export_conversation()
-                print_system_message(f"Exported {len(conversation)} messages", style="bold green")
+                print_system_message(f"Exported {len(conversation)} messages", style="dim")
                 print_system_message("(In a real app, this would save to a file)", style="dim")
                 continue
             
             # Regular chat
-            with ThinkingSpinner("🤔 Thinking"):
+            with ThinkingSpinner("Thinking"):
                 response = chat.chat(
                     user_input, 
                     enable_tools=True, 
@@ -212,10 +219,10 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
             print_assistant_response(response)
             
         except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
+            print("\n\nGoodbye!")
             break
         except Exception as e:
-            print(f"\n❌ Error: {e}")
+            print(f"\nError: {e}")
 
 
 def main():
@@ -338,17 +345,17 @@ Examples:
         print_section("INITIALIZING CHAT APPLICATION")
         
         # Initialize model handler
-        print("\n1️⃣  Loading model handler...")
+        print("\n1. Loading model handler...")
         model_handler = ModelHandler(
             model_path=args.model,
             n_ctx=args.context,
             n_gpu_layers=args.gpu_layers
         )
         actual_ctx = model_handler.llm.n_ctx()
-        print(f"   ✓ Model handler ready (context: {actual_ctx:,} tokens)")
+        print(f"   Model handler ready (context: {actual_ctx:,} tokens)")
         
         # Initialize memory tool
-        print("\n2️⃣  Loading memory tool...")
+        print("\n2. Loading memory tool...")
         memory_tool = MemoryTool(
             memory_dir=args.memory_dir,
             model_handler=model_handler,
@@ -358,18 +365,18 @@ Examples:
         # Check memory status
         total_chunks = len(memory_tool.storage.get_all_chunks())
         if total_chunks == 0:
-            print("   ⚠️  Memory store is empty (use memory_cli.py to add data)")
+            print("   Memory store is empty (use memory_cli.py to add data)")
         else:
-            print(f"   ✓ Memory tool ready ({total_chunks} chunks loaded)")
-        print(f"   📁 Memory directory: {args.memory_dir}")
+            print(f"   Memory tool ready ({total_chunks} chunks loaded)")
+        print(f"   Memory directory: {args.memory_dir}")
         
         # Initialize chat API
-        print("\n3️⃣  Initializing chat API...")
+        print("\n3. Initializing chat API...")
         
         # System message for the assistant
         if args.system_prompt:
             system_message = load_system_prompt(args.system_prompt)
-            print(f"   ✓ Custom system prompt loaded")
+            print(f"   Custom system prompt loaded")
         else:
             system_message = (
                 "You are a helpful technical assistant with access to documentation. "
@@ -392,7 +399,7 @@ Examples:
                 "- Be extremely brief - state only the essential facts\n"
                 "- No pleasantries, just direct information"
             )
-            print("   ✓ Default system prompt configured")
+            print("   Default system prompt configured")
         
         chat = ChatAPI(
             model_handler=model_handler,
@@ -401,10 +408,10 @@ Examples:
             max_tools_in_prompt=2,  # Show top 2 most relevant tools for better selection
             embedder=memory_tool.embedder if memory_tool else None  # Use memory embedder for tool selection
         )
-        print("   ✓ Chat API ready (semantic tool selection: top-2 mode)")
+        print("   Chat API ready (semantic tool selection: top-2 mode)")
         
         # Register memory retrieval tool (read-only)
-        print("\n4️⃣  Registering memory retrieval tool...")
+        print("\n4. Registering memory retrieval tool...")
         tool_def = memory_tool.RETRIEVE_TOOL_DEF
         chat.register_tool(
             name=tool_def["name"],
@@ -418,16 +425,16 @@ Examples:
             print(f"   Description: {tool_def['description'][:100]}...")
             print(f"   Parameters: {list(tool_def['parameters'].get('properties', {}).keys())}")
         
-        print("   ✓ Memory retrieval tool registered")
+        print("   Memory retrieval tool registered")
         
         # Register MCP servers if any
         if args.mcp_servers:
-            print(f"\n5️⃣  Registering {len(args.mcp_servers)} MCP server(s)...")
+            print(f"\n5. Registering {len(args.mcp_servers)} MCP server(s)...")
             for mcp_spec in args.mcp_servers:
                 try:
                     # Parse server specification: "name:command arg1 arg2"
                     if ':' not in mcp_spec:
-                        print(f"   ⚠️  Invalid MCP spec (missing ':'): {mcp_spec}")
+                        print(f"   Invalid MCP spec (missing ':'): {mcp_spec}")
                         continue
                     
                     name, command_str = mcp_spec.split(':', 1)
@@ -450,29 +457,29 @@ Examples:
                     
                     # Verify registration
                     registered_tool_names = [name for name in chat.tools.keys() if name.startswith(f"{mcp_client.name}.")]
-                    print(f"   ✓ MCP server '{name}' registered ({len(registered_tool_names)} tools)")
+                    print(f"   MCP server '{name}' registered ({len(registered_tool_names)} tools)")
                     
                     if args.debug and len(registered_tool_names) > 0:
                         print(f"     Registered as: {registered_tool_names[:5]}{'...' if len(registered_tool_names) > 5 else ''}")
                     
                 except Exception as e:
-                    print(f"   ✗ Failed to register MCP server '{name}': {e}")
+                    print(f"   Failed to register MCP server '{name}': {e}")
         
         print("\n" + "=" * 70)
-        print("🚀 All systems ready!")
+        print("All systems ready!")
         if args.no_refine_answers:
-            print("📝 Answer refinement: DISABLED")
+            print("Answer refinement: DISABLED")
         else:
-            print("📝 Answer refinement: ENABLED")
+            print("Answer refinement: ENABLED")
         print("=" * 70)
         
         # Run interactive chat
         interactive_chat(chat, refine_answers=not args.no_refine_answers)
         
     except KeyboardInterrupt:
-        print("\n\n👋 Interrupted by user")
+        print("\n\nInterrupted by user")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
     finally:

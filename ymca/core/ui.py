@@ -36,24 +36,24 @@ def print_assistant_response(text: str):
         text: Assistant's response (markdown)
     """
     console.print()  # Add spacing
-    console.print("🤖 Assistant:", style="bold green")
-    console.print("─" * console.width, style="dim green")
+    console.print("Assistant:", style="dim yellow")
+    console.print("─" * console.width, style="dim")
     
     # Render markdown
     md = Markdown(text)
     console.print(md)
-    console.print("─" * console.width, style="dim green")
+    console.print("─" * console.width, style="dim")
 
 
-def print_system_message(text: str, style: str = "dim yellow"):
+def print_system_message(text: str, style: str = "dim"):
     """
     Print system message (tool calls, status updates).
     
     Args:
         text: System message text
-        style: Rich style string (default: dim yellow)
+        style: Rich style string (default: dim)
     """
-    console.print(f"  ℹ️  {text}", style=style)
+    console.print(f"  Info: {text}", style=style)
 
 
 def print_tool_call(tool_name: str, status: str = "calling"):
@@ -65,12 +65,12 @@ def print_tool_call(tool_name: str, status: str = "calling"):
         status: Status string (e.g., "calling", "completed", "failed")
     """
     if status == "calling":
-        console.print(f"  🔧 Calling tool: ", style="bold yellow", end="")
-        console.print(tool_name, style="bold white")
+        console.print(f"  Calling tool: ", style="dim", end="")
+        console.print(tool_name, style="")
     elif status == "completed":
-        console.print(f"  ✓ Tool completed: {tool_name}", style="dim green")
+        console.print(f"  Tool completed: {tool_name}", style="dim")
     elif status == "failed":
-        console.print(f"  ✗ Tool failed: {tool_name}", style="dim red")
+        console.print(f"  Tool failed: {tool_name}", style="dim")
 
 
 def print_markdown(text: str):
@@ -113,6 +113,10 @@ class ThinkingSpinner:
     def _spin(self):
         """Spinner animation loop with timer."""
         idx = 0
+        # ANSI codes: dim text
+        dim = "\033[2m"
+        reset = "\033[0m"
+        
         while not self.stop_spinner:
             elapsed = time.time() - self.start_time
             minutes = int(elapsed // 60)
@@ -124,7 +128,7 @@ class ThinkingSpinner:
                 time_str = f"{seconds}s"
             
             spinner = self.spinner_chars[idx % len(self.spinner_chars)]
-            sys.stdout.write(f"\r{self.message} {spinner} [{time_str}]  ")
+            sys.stdout.write(f"\r{dim}{self.message} {spinner} [{time_str}]{reset}  ")
             sys.stdout.flush()
             time.sleep(0.1)
             idx += 1
