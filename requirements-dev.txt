@@ -1,8 +1,0 @@
-black
-mypy
-isort
-flake8
-pytest
-pytest-cov
-pytest-mock
-pytest-xdist

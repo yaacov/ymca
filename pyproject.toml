@@ -1,41 +1,155 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ymca"
+version = "0.1.0"
+description = "YMCA - Yaacov's MCP Agent: A local-first AI agent leveraging MCP servers, running entirely on local hardware with llama.cpp and aggressive quantization for privacy and efficiency"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Yaacov Zamir", email = "kobi.zamir@gmail.com"}
+]
+keywords = ["ai", "llm", "mcp", "agent", "chat", "memory", "conversational-ai", "local-llm", "llama-cpp", "quantization", "privacy", "mcp-server"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Core dependencies for model downloading and conversion
+    "transformers>=4.36.0",
+    "huggingface-hub>=0.20.0",
+    "torch>=2.1.0",
+    "safetensors>=0.4.0",
+    "sentencepiece>=0.1.99",
+    "protobuf>=4.25.0",
+    
+    # GGUF conversion tools
+    "gguf>=0.1.0",
+    
+    # llama.cpp Python bindings for inference
+    "llama-cpp-python>=0.2.0",
+    
+    # Memory tool dependencies
+    "sentence-transformers>=2.2.0",
+    "numpy>=1.24.0",
+    "chromadb>=0.4.0",
+    
+    # CLI and utilities
+    "tqdm>=4.66.0",
+    "click>=8.1.0",
+    "pyyaml>=6.0.0",
+    "rich>=13.0.0",
+    
+    # System monitoring and performance tracking
+    "psutil>=5.9.0",
+    
+    # Web server dependencies
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "isort>=5.12.0",
+]
+
+[project.scripts]
+ymca-chat = "bin.chat_app:main"
+ymca-memory = "bin.memory_cli:main"
+ymca-web = "bin.web_app:main"
+ymca-convert = "bin.model_converter:main"
+
+[project.urls]
+Homepage = "https://github.com/yaacov/ymca"
+Repository = "https://github.com/yaacov/ymca"
+Issues = "https://github.com/yaacov/ymca/issues"
+
+[tool.setuptools]
+packages = ["ymca", "ymca.core", "ymca.chat", "ymca.tools"]
+
+[tool.setuptools.package-data]
+ymca = ["py.typed"]
+
 [tool.black]
-line-length = 240
-target-version = ["py310", "py311", "py312"]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 [tool.isort]
 profile = "black"
-line_length = 240
+line_length = 100
 multi_line_output = 3
 include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "W191",  # indentation contains tabs
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=ymca",
+    "--cov-report=term-missing",
+]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 check_untyped_defs = true
-disallow_untyped_decorators = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
-warn_unreachable = true
 strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "transformers.*",
+    "torch.*",
+    "chromadb.*",
+    "sentence_transformers.*",
+    "llama_cpp.*",
+]
+ignore_missing_imports = true
+

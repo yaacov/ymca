@@ -1,13 +1,13 @@
-# Virtual Environment
-.venv/
-venv/
-env/
-
 # Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -21,50 +21,130 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Type checking
-.mypy_cache/
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.virtualenv/
 
-# Testing
-.coverage
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
 htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
 .pytest_cache/
+cover/
 
-# Model cache and checkpoints
-models/
-*.bin
-*.safetensors
+# Jupyter Notebook
+.ipynb_checkpoints
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# IPython
+profile_default/
+ipython_config.py
 
-# OS
-.DS_Store
-Thumbs.db
+# pyenv
+.python-version
 
-# Environment variables
+# Environments
 .env
 .env.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Project-specific
+# llama.cpp directory (built from source)
+llama.cpp/
+
+# Model files (large binary files)
+models/
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Memory tool storage (temporary test directories)
+.memory/
+.memory_test/
+.memory_test1/
+.memory_test2/
+.memory_test3/
+.memory_template/
+.memory_llm/
+.memory_test_guidance/
+.memory_test_completion/
+.memory_native_test/
+.memory_test_new/
+test_docs/
+
+# ChromaDB vector database
+**/chroma/
+
+# Data directory (user data, caches, etc.)
+data/
 
 # Logs
 *.log
 
+# OS specific
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
 # Temporary files
 *.tmp
 *.temp
-requirements.txt.new
+*.swp
+*.swo
+*~
 
-# Database files
-memory.db
-
-# Filesystem data directory
-data/
-debug/
+# Output files
+results.json
+output/

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YMCA Chat - AI Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Markdown rendering library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
+    <!-- Syntax highlighting for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🤖 YMCA Chat Assistant</h1>
+            <div class="header-actions">
+                <button id="summary-btn" class="btn btn-secondary" title="Show conversation summary">
+                    📋 Summary
+                </button>
+                <button id="export-btn" class="btn btn-secondary" title="Export conversation">
+                    💾 Export
+                </button>
+                <button id="clear-btn" class="btn btn-danger" title="Clear conversation history">
+                    🗑️ Clear
+                </button>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chat-container">
+            <!-- Welcome message -->
+            <div class="message system-message">
+                <div class="message-content">
+                    <h3>👋 Welcome to YMCA Chat!</h3>
+                    <p>I'm an AI assistant with access to tools and memory. I can help you with:</p>
+                    <ul>
+                        <li>Technical questions and documentation</li>
+                        <li>MCP server integration</li>
+                        <li>Multi-step planning and execution</li>
+                    </ul>
+                    <p><strong>Tips:</strong></p>
+                    <ul>
+                        <li>I'll search documentation to give accurate answers</li>
+                        <li>I can call tools to perform actions</li>
+                        <li>Use the buttons above to manage the conversation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    id="user-input" 
+                    class="user-input" 
+                    placeholder="Type your message here... (Shift+Enter for new line, Enter to send)"
+                    rows="1"
+                ></textarea>
+                <button id="send-btn" class="btn btn-primary">
+                    Send
+                </button>
+            </div>
+            <div class="input-options">
+                <label>
+                    <input type="checkbox" id="enable-tools" checked>
+                    Enable Tools
+                </label>
+                <label>
+                    <input type="checkbox" id="enable-planning" checked>
+                    Enable Planning
+                </label>
+                <label>
+                    Temperature: <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                    <span id="temperature-value">0.7</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content">
+            <div class="spinner"></div>
+            <p>🤔 Thinking...</p>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
+
