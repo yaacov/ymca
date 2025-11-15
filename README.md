@@ -29,15 +29,31 @@ YMCA implements **selective context loading** (also known as tool selection) to 
 
 ## Installation
 
-Install YMCA in development mode to get started:
+### Create a Virtual Environment
+
+It's recommended to use a virtual environment to avoid conflicts with system packages:
 
 ```bash
-pip install -e .
+# Create virtual environment
+python3 -m venv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+
+# On Windows:
+venv\Scripts\activate
 ```
 
-For development with testing and linting tools:
+### Install YMCA
+
+With the virtual environment activated:
 
 ```bash
+# Basic installation
+pip install -e .
+
+# Or with development tools (testing, linting)
 pip install -e ".[dev]"
 ```
 
@@ -82,9 +98,15 @@ CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS" pip install --upgrade --
 CMAKE_ARGS="-DGGML_VULKAN=on" pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir
 ```
 
-> **Note:** After installing with hardware acceleration, you may need to reinstall YMCA to ensure all dependencies are properly linked: `pip install -e .`
+> **Note:** After installing with hardware acceleration, ensure your virtual environment is activated, then reinstall YMCA: `pip install -e .`
 
 ## Quick Start
+
+> **Note:** Make sure your virtual environment is activated before running any YMCA commands:
+> ```bash
+> source venv/bin/activate  # On macOS/Linux
+> # venv\Scripts\activate   # On Windows
+> ```
 
 ### Chat Interface
 Start an interactive chat session with the agent:
@@ -102,6 +124,8 @@ ymca-web
 
 The web server will start on `http://localhost:8000` by default.
 
+**[Web Interface Documentation](docs/web-interface.md)** - Complete guide to the web UI, API endpoints, deployment, and customization.
+
 ### Memory Management
 Interact with the agent's memory system:
 
@@ -111,12 +135,16 @@ ymca-memory
 
 Use this to query, add, or manage stored memories and embeddings.
 
+**[Memory Tool Documentation](docs/memory-tool.md)** - Comprehensive guide to storing, retrieving, and managing semantic memories.
+
 ### Model Conversion
 Convert Hugging Face models to GGUF format for use with llama.cpp:
 
 ```bash
-ymca-convert
+ymca-convert model-name --quantize q4_k_m
 ```
+
+**[Model Converter Documentation](docs/model-converter.md)** - Complete guide to downloading, converting, and quantizing models.
 
 ### MCP Server Integration
 Connect to MCP servers and use custom system prompts:
@@ -134,6 +162,19 @@ make web-mtv    # Web interface with MTV MCP server
 ```
 
 See `docs/mtv-mcp-setup.md` for detailed MTV MCP server configuration.
+
+## Documentation
+
+Comprehensive guides for all YMCA tools and features:
+
+### Core Tools
+- **[Memory Tool](docs/memory-tool.md)** - Semantic memory system with storage, retrieval, and document loading
+- **[Web Interface](docs/web-interface.md)** - Browser-based chat interface with API documentation
+- **[Model Converter](docs/model-converter.md)** - Download and convert Hugging Face models to GGUF
+
+### Integration Guides
+- **[MTV MCP Setup](docs/mtv-mcp-setup.md)** - Configure Migration Toolkit for Virtualization MCP server
+
 
 ## Requirements
 

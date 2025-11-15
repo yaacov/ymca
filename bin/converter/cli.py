@@ -39,8 +39,8 @@ Examples:
   # Download specific model
   python scripts/model_converter.py --model meta-llama/Llama-2-7b-chat-hf
   
-  # Download and convert with quantization
-  python scripts/model_converter.py --quantize q4_0
+  # Download and convert with quantization (K-quant recommended)
+  python scripts/model_converter.py --quantize q4_k_m
   
   # Download only (skip conversion)
   python scripts/model_converter.py --download-only
@@ -49,13 +49,23 @@ Examples:
   python scripts/model_converter.py --output-dir ./my_models
   
 Available quantization methods:
-  - q4_0: 4-bit quantization (smallest, fastest)
-  - q4_1: 4-bit quantization (better quality)
-  - q5_0: 5-bit quantization
-  - q5_1: 5-bit quantization (better quality)
-  - q8_0: 8-bit quantization (best quality)
-  - f16: 16-bit float (no quantization)
-  - f32: 32-bit float (no quantization, largest)
+  K-quants (recommended - better quality):
+    - q4_k_m: 4-bit K-quant medium (best for most uses)
+    - q4_k_s: 4-bit K-quant small (slightly smaller)
+    - q5_k_m: 5-bit K-quant medium (recommended balance)
+    - q5_k_s: 5-bit K-quant small
+    - q6_k: 6-bit K-quant (very good quality)
+    - q3_k_m: 3-bit K-quant medium (aggressive compression)
+    - q3_k_s: 3-bit K-quant small
+    - q3_k_l: 3-bit K-quant large
+    - q2_k: 2-bit K-quant (experimental)
+  
+  Legacy quants:
+    - q4_0: 4-bit legacy
+    - q4_1: 4-bit legacy (better quality)
+    - q5_0: 5-bit legacy
+    - q5_1: 5-bit legacy (better quality)
+    - q8_0: 8-bit quantization (high quality)
         """
     )
     
@@ -83,9 +93,17 @@ Available quantization methods:
     parser.add_argument(
         "--quantize",
         type=str,
-        choices=["q4_0", "q4_1", "q5_0", "q5_1", "q8_0"],
+        choices=[
+            # Legacy quantization methods
+            "q4_0", "q4_1", "q5_0", "q5_1", "q8_0",
+            # K-quant methods (recommended)
+            "q2_k", "q3_k_s", "q3_k_m", "q3_k_l",
+            "q4_k_s", "q4_k_m",
+            "q5_k_s", "q5_k_m",
+            "q6_k", "q8_0"
+        ],
         default=None,
-        help="Quantization method for GGUF conversion"
+        help="Quantization method for GGUF conversion (K-quants recommended for better quality)"
     )
     
     parser.add_argument(

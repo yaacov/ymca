@@ -29,7 +29,8 @@ class LlamaCppConverter:
         
         Args:
             model_path: Path to the model directory (safetensor format)
-            quantization: Quantization method (e.g., 'q4_0', 'q4_1', 'q5_0', 'q5_1', 'q8_0')
+            quantization: Quantization method (e.g., 'q4_k_m', 'q5_k_m', 'q6_k', 'q8_0')
+                         K-quants (q4_k_m, q5_k_m, etc.) recommended for better quality
             output_type: Output data type (f32, f16, q8_0, etc.)
             
         Returns:

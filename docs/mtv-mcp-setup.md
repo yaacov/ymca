@@ -10,7 +10,13 @@ The MTV MCP server provides tools for migrating virtual machines from vSphere, o
 
 ### Installing the MTV MCP Server
 
+Install in your virtual environment:
+
 ```bash
+# Ensure your virtual environment is activated
+source venv/bin/activate  # On macOS/Linux
+# venv\Scripts\activate   # On Windows
+
 # Install kubectl-mtv with MCP server support
 pip install mcp-server-kubectl-mtv
 ```
