@@ -1,15 +1,15 @@
 # YMCA - Yaacov's MCP Agent
 
-YMCA (Yaacov's MCP Agent) is a local-first AI agent framework designed to run entirely on your own hardware. It leverages the Model Context Protocol (MCP) to connect to various tool servers while using llama.cpp with aggressive quantization for efficient local inference. This approach ensures privacy, reduces costs, and eliminates dependencies on cloud services.
+YMCA (Yaacov's MCp Agent) is a local-first AI agent framework designed to run entirely on your own hardware. It leverages the Model Context Protocol (MCP) to connect to various tool servers while using small language models (SML) with aggressive quantization for efficient local inference. This approach ensures privacy, reduces costs, and eliminates dependencies on cloud services.
 
 ## Overview
 
-YMCA combines the power of large language models with the flexibility of MCP servers, all while maintaining a small footprint through quantized models. The framework includes built-in memory capabilities, allowing the agent to maintain context across conversations using semantic search and vector embeddings.
+YMCA combines the power of small language models (SML) with the flexibility of MCP servers, all while maintaining a small footprint through quantized models. The framework uses llama.cpp and includes built-in memory capabilities, allowing the agent to maintain context across conversations using semantic search and vector embeddings.
 
 ## Key Features
 
 ### Local Execution
-Run AI models directly on your hardware without sending data to external servers. YMCA uses llama.cpp for fast, efficient inference on both CPU and GPU, supporting a wide range of quantized model formats.
+Run small AI models directly on your hardware without sending data to external servers. YMCA uses llama.cpp for fast, efficient inference on both CPU and GPU, supporting a wide range of quantized model formats.
 
 ### MCP Server Integration
 Connect to Model Context Protocol servers to extend your agent's capabilities. MCP provides a standardized way to integrate tools, data sources, and services, allowing your agent to interact with databases, APIs, file systems, and more.
@@ -22,6 +22,10 @@ Built-in memory system using ChromaDB for vector storage and sentence transforme
 
 ### Privacy-Focused
 All processing happens locally. Your conversations, data, and model interactions never leave your machine, ensuring complete privacy and data sovereignty.
+
+### Intelligent Tool Selection
+YMCA implements **selective context loading** (also known as tool selection) to optimize context window usage. Instead of loading all available tools into the model's context, the system uses semantic search to identify and provide only the most relevant tools for each query. This technique significantly reduces the token count in system prompts, enabling:
+
 
 ## Installation
 
@@ -36,6 +40,49 @@ For development with testing and linting tools:
 ```bash
 pip install -e ".[dev]"
 ```
+
+### Hardware-Specific Installation for Optimal Performance
+
+For best performance, install `llama-cpp-python` with hardware-specific acceleration. The basic installation builds for CPU only, but you can enable GPU acceleration and other optimizations by setting `CMAKE_ARGS` before installation:
+
+**Apple Silicon (M1, M2, M3) - Metal Acceleration:**
+
+```bash
+CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir
+```
+
+**NVIDIA GPUs - CUDA Acceleration:**
+
+```bash
+# Build from source with CUDA support
+CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir
+
+# Check your CUDA version first:
+nvidia-smi
+
+# Or use pre-built wheels (faster, replace cu121 with your CUDA version)
+pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+```
+
+**AMD GPUs - ROCm/HIP Acceleration:**
+
+```bash
+CMAKE_ARGS="-DGGML_HIPBLAS=on" pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir
+```
+
+**CPU Optimization - OpenBLAS:**
+
+```bash
+CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS" pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir
+```
+
+**Cross-Platform GPU - Vulkan:**
+
+```bash
+CMAKE_ARGS="-DGGML_VULKAN=on" pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir
+```
+
+> **Note:** After installing with hardware acceleration, you may need to reinstall YMCA to ensure all dependencies are properly linked: `pip install -e .`
 
 ## Quick Start
 
@@ -87,16 +134,6 @@ make web-mtv    # Web interface with MTV MCP server
 ```
 
 See `docs/mtv-mcp-setup.md` for detailed MTV MCP server configuration.
-
-## Architecture
-
-YMCA consists of several core components:
-
-- **Model Handler**: Manages loading and inference with quantized models via llama.cpp
-- **Chat API**: Provides the conversational interface and manages dialog flow
-- **Memory Tool**: Implements semantic memory using vector embeddings and ChromaDB
-- **Tool Selector**: Intelligently chooses and invokes MCP tools based on context
-- **MCP Integration**: Connects to external MCP servers for extended capabilities
 
 ## Requirements
 
