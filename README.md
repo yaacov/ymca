@@ -172,10 +172,6 @@ ymca-chat --mcp-server "mtv:kubectl-mtv mcp-server" --system-prompt @docs/mtv-sy
 
 # Multiple MCP servers
 ymca-chat --mcp-server "server1:cmd1" --mcp-server "server2:cmd2"
-
-# Or use convenient make targets
-make chat-mtv   # CLI chat with MTV MCP server
-make web-mtv    # Web interface with MTV MCP server
 ```
 
 See `docs/mtv-mcp-setup.md` for detailed MTV MCP server configuration.

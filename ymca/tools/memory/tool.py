@@ -89,20 +89,25 @@ class MemoryTool:
     def __init__(
         self, 
         memory_dir: str = "data/tools/memory", 
-        model_name: str = "all-MiniLM-L6-v2",
+        model_name: str = "ibm-granite/granite-embedding-english-r2",
+        model_cache_dir: str = "models",
         model_handler = None,
         chunk_size: int = 4000,
-        overlap: int = 400
+        overlap: int = 400,
+        device: str = None
     ):
         """
         Initialize the memory tool.
         
         Args:
             memory_dir: Directory to store memory data
-            model_name: Sentence transformer model name for embeddings
+            model_name: Sentence transformer model name (e.g., "ibm-granite/granite-embedding-english-r2")
+                       Default: IBM Granite Embedding English R2 (149M params, 768 dimensions)
+            model_cache_dir: Directory to cache embedding models (default: "models")
             model_handler: ModelHandler instance for question generation (required)
             chunk_size: Chunk size in characters
             overlap: Overlap between chunks in characters
+            device: Device for embeddings (None=auto, "cuda", "mps", "cpu")
         """
         if not model_handler:
             raise ValueError("model_handler is required for question generation")
@@ -113,7 +118,7 @@ class MemoryTool:
         
         # Initialize components
         self.chunker = TextChunker(chunk_size=chunk_size, overlap=overlap)
-        self.embedder = Embedder(model_name=model_name)
+        self.embedder = Embedder(model_name=model_name, cache_folder=model_cache_dir, device=device)
         self.storage = ChunkStorage(self.memory_dir / "chunks")
         self.vector_store = VectorStore(self.memory_dir / "vectors")
         self.retriever = MemoryRetriever(

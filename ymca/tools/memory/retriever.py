@@ -158,7 +158,7 @@ Expanded query:"""
             num_questions: Number of questions per (sub)chunk
             max_chunk_size: Maximum size for question generation (default: 1200 chars)
                            This is chosen to match embedding model capacity:
-                           - all-MiniLM-L6-v2 max: 512 tokens (~2048 chars)
+                           - IBM Granite Embedding English R2: 512 tokens max
                            - 1200 chars ≈ 300 tokens (safe margin)
             
         Returns:

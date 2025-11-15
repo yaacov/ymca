@@ -150,7 +150,7 @@ Examples:
     parser.add_argument(
         "--model",
         type=str,
-        default="models/ibm-granite_granite-4.0-h-tiny/gguf/ibm-granite_granite-4.0-h-tiny-q4_1.gguf",
+        default="models/ibm-granite_granite-4.0-h-tiny/gguf/ibm-granite_granite-4.0-h-tiny-q4_k_m.gguf",
         help="Path to GGUF model"
     )
     

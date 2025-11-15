@@ -59,22 +59,19 @@ The `@` prefix tells YMCA to load the prompt from a file. You can also use an ab
 ymca-chat --mcp-server "mtv:kubectl-mtv mcp-server" --system-prompt @/path/to/your-custom-prompt.txt
 ```
 
-### Quick Start with Make
+### Quick Start
 
-For convenience, use the provided make targets:
+Run YMCA with MTV configuration:
 
 ```bash
 # Start CLI chat with MTV configuration
-make chat-mtv
+ymca-chat --mcp-server "mtv:kubectl-mtv mcp-server" --system-prompt @docs/mtv-system-prompt.txt
 
 # Start web interface with MTV configuration
-make web-mtv
-
-# With custom model quantization
-make web-mtv MODEL=q8
+ymca-web --mcp-server "mtv:kubectl-mtv mcp-server" --system-prompt @docs/mtv-system-prompt.txt
 
 # With custom host/port
-make web-mtv HOST=0.0.0.0 PORT=9000
+ymca-web --mcp-server "mtv:kubectl-mtv mcp-server" --system-prompt @docs/mtv-system-prompt.txt --host 0.0.0.0 --port 9000
 ```
 
 ### Method 2: Programmatic Configuration
@@ -148,7 +145,7 @@ The MTV MCP server provides tools for:
 
 ```bash
 # 1. Start YMCA with MTV MCP server and system prompt
-make chat-mtv
+ymca-chat --mcp-server "mtv:kubectl-mtv mcp-server" --system-prompt @docs/mtv-system-prompt.txt
 
 # 2. In the chat:
 User: "What providers do I have?"
