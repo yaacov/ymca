@@ -43,7 +43,7 @@ class ChatAPI:
             system_message: Custom system message (default: "You are a helpful AI assistant.")
             max_tools_in_prompt: Maximum tools to include in system prompt (default: 10)
             embedder: Optional embedder for semantic tool selection
-            num_tool_queries: Number of example queries to generate per tool for embedding (default: 5)
+            num_tool_queries: Number of semantic summaries to generate per tool for embedding (default: 5)
             max_history_in_prompt: Maximum history messages to include in LLM prompt (default: 10)
         """
         self.model_handler = model_handler

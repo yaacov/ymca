@@ -75,31 +75,31 @@ class ModelHandler:
     
     def generate_questions(self, chunk: str, num_questions: int = 3) -> List[str]:
         """
-        Generate questions that can be answered by the chunk.
+        Generate semantic summaries for the chunk (optimized for retrieval).
         
-        Uses the LLM to generate relevant questions about the text content.
-        Fails explicitly if the LLM cannot generate the requested number of questions.
+        Uses the LLM to generate declarative statements that capture key information.
+        These summaries are embedded and matched against user queries for retrieval.
         
         Args:
-            chunk: Text chunk to generate questions about
-            num_questions: Number of questions to generate (default: 3)
+            chunk: Text chunk to generate summaries for
+            num_questions: Number of semantic summaries to generate (default: 3)
             
         Returns:
-            List of generated questions
+            List of generated semantic summaries (declarative statements)
             
         Raises:
-            ValueError: If parsing fails or not enough questions generated
+            ValueError: If parsing fails or not enough summaries generated
             Exception: If LLM call fails
         """
         prompt = self._build_question_prompt(chunk, num_questions)
         
-        # Generate questions via LLM
-        # Note: max_tokens needs to be high enough for detailed questions
-        # Detailed questions (10-20 words) ~= 15-30 tokens each
-        # For 2-3 questions: 40-90 tokens + overhead = ~150-200 tokens needed
+        # Generate semantic summaries via LLM
+        # Note: max_tokens needs to be high enough for detailed summaries
+        # Detailed summaries (15-30 words) ~= 20-40 tokens each
+        # For 2-3 summaries: 40-120 tokens + overhead = ~150-250 tokens needed
         response = self.llm.create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=400,  # Increased to support detailed questions (10-20 words each)
+            max_tokens=500,  # Increased to support detailed summaries (15-30 words each)
             temperature=0.7,  # Balanced between creativity and consistency
             stop=["\n\n", "Text:", "---", "Instructions:"],  # Stop tokens to prevent rambling
             repeat_penalty=1.1  # Reduce repetition
@@ -107,49 +107,52 @@ class ModelHandler:
         
         # Extract and parse generated text (will raise ValueError if insufficient)
         generated_text = response['choices'][0]['message']['content'].strip()
-        questions = parse_questions_from_text(generated_text, num_questions)
+        summaries = parse_questions_from_text(generated_text, num_questions)
         
-        # Validate and log question quality
-        for i, q in enumerate(questions, 1):
-            word_count = len(q.split())
-            if word_count < 5:
-                logger.warning(f"Question {i} is very short ({word_count} words): {q}")
-            elif word_count > 30:
-                logger.warning(f"Question {i} is very long ({word_count} words): {q}")
+        # Validate and log summary quality
+        for i, summary in enumerate(summaries, 1):
+            word_count = len(summary.split())
+            if word_count < 10:
+                logger.warning(f"Summary {i} is very short ({word_count} words): {summary}")
+            elif word_count > 40:
+                logger.warning(f"Summary {i} is very long ({word_count} words): {summary}")
         
-        return questions
+        return summaries
     
     def _build_question_prompt(self, chunk: str, num_questions: int) -> str:
         """
-        Build prompt for question generation optimized for retrieval.
+        Build prompt for semantic summary generation optimized for retrieval.
         
-        Creates questions that users would naturally ask when looking for this information.
-        Focuses on HOW-TO, configuration, troubleshooting, and procedural aspects.
+        Creates declarative statements that capture the key information in the chunk.
+        These summaries are semantically rich and match well against user queries.
         
         Args:
             chunk: Text chunk
-            num_questions: Number of questions to generate
+            num_questions: Number of semantic summaries to generate
             
         Returns:
             Formatted prompt string
         """
-        return f"""Given the following technical documentation, generate exactly {num_questions} questions about this content.
+        return f"""Given the following technical documentation, generate exactly {num_questions} comprehensive semantic summaries that capture the key information.
 
 Text:
 {chunk}
 
 Instructions:
-- Generate exactly {num_questions} DIVERSE questions covering DIFFERENT aspects of the text
-- Each question should emphasize UNIQUE characteristics of this content
-- If the text contains a list, ask about the overall purpose/pattern, NOT individual items
-- If the text has multiple concepts, each question should cover a different concept
-- Questions should be specific to what makes THIS content unique
-- Questions should be specific and detailed (8-20 words each)
-- Each question must be on a separate line
-- Do not number the questions
-- Each question must end with a question mark
+- Generate exactly {num_questions} DECLARATIVE statements that summarize DIFFERENT aspects of the content
+- Each statement should be a complete, self-contained description of a key concept or fact
+- Focus on WHAT, HOW, WHY aspects: what things are, how they work, why they matter
+- Include specific technical details: commands, parameters, configurations, procedures
+- Each statement should capture unique information that would help answer user queries
+- If the text contains procedures, describe the steps and their purpose
+- If the text contains lists, summarize what the list represents and key patterns
+- If the text contains configurations, describe what they control and their effects
+- Statements should be rich and detailed (15-30 words each)
+- Each statement must be on a separate line
+- Do not number the statements
+- Use present tense and be factual
 
-Questions:"""
+Semantic summaries:"""
     
 
     

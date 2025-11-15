@@ -28,7 +28,7 @@ class MemoryRetriever:
             storage: Chunk storage
             vector_store: Vector store
             embedder: Embedder
-            model_handler: Optional model handler for question generation
+            model_handler: Optional model handler for semantic summary generation
         """
         self.storage = storage
         self.vector_store = vector_store
@@ -148,30 +148,31 @@ Expanded query:"""
     
     def generate_questions(self, chunk: str, num_questions: int = 2, max_chunk_size: int = 1200) -> List[str]:
         """
-        Generate questions for a chunk using LLM.
+        Generate semantic summaries for a chunk using LLM.
         
+        Creates declarative statements that capture key information for better retrieval.
         If the chunk is larger than max_chunk_size, it will be split into sub-chunks
-        and num_questions will be generated for EACH sub-chunk.
+        and num_questions semantic summaries will be generated for EACH sub-chunk.
         
         Args:
             chunk: Text chunk
-            num_questions: Number of questions per (sub)chunk
-            max_chunk_size: Maximum size for question generation (default: 1200 chars)
+            num_questions: Number of semantic summaries per (sub)chunk
+            max_chunk_size: Maximum size for summary generation (default: 1200 chars)
                            This is chosen to match embedding model capacity:
                            - IBM Granite Embedding English R2: 512 tokens max
                            - 1200 chars ≈ 300 tokens (safe margin)
             
         Returns:
-            List of questions
+            List of semantic summaries (declarative statements)
             
         Raises:
             ValueError: If model_handler is not provided
-            Exception: If question generation fails
+            Exception: If summary generation fails
         """
         if not self.model_handler:
-            raise ValueError("model_handler is required for question generation")
+            raise ValueError("model_handler is required for semantic summary generation")
         
-        # If chunk is small enough, generate questions directly
+        # If chunk is small enough, generate summaries directly
         if len(chunk) <= max_chunk_size:
             # Reset model state before generating to avoid decode errors
             self.model_handler.reset_state()
@@ -201,16 +202,16 @@ Expanded query:"""
         
         logger.debug(f"Split {len(chunk)} char chunk into {len(sub_chunks)} sub-chunks")
         
-        # Generate num_questions for EACH sub-chunk
-        all_questions = []
+        # Generate semantic summaries for EACH sub-chunk
+        all_summaries = []
         for i, sub_chunk in enumerate(sub_chunks):
             try:
                 # Reset model state before each sub-chunk to avoid decode errors
                 self.model_handler.reset_state()
-                questions = self.model_handler.generate_questions(sub_chunk, num_questions=num_questions)
-                all_questions.extend(questions)
+                summaries = self.model_handler.generate_questions(sub_chunk, num_questions=num_questions)
+                all_summaries.extend(summaries)
             except Exception as e:
-                logger.warning(f"Question generation failed for sub-chunk {i+1}/{len(sub_chunks)}: {e}")
+                logger.warning(f"Semantic summary generation failed for sub-chunk {i+1}/{len(sub_chunks)}: {e}")
         
-        return all_questions
+        return all_summaries
 

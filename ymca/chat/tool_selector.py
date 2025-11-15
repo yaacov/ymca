@@ -17,8 +17,10 @@ class ToolSelector:
     """
     Selects most relevant tools for a query using semantic similarity.
     
-    This helps keep the system prompt short by only including tools
-    that are likely to be useful for the current query.
+    Uses semantic summaries (declarative statements) to represent tool capabilities,
+    providing better matching against user queries than question-based approaches.
+    This helps keep the system prompt short by only including tools that are
+    likely to be useful for the current query.
     """
     
     def __init__(self, embedder=None, model_handler=None, cache_dir: Optional[str] = None, num_queries: int = 5):
@@ -27,16 +29,16 @@ class ToolSelector:
         
         Args:
             embedder: Embedder for semantic search (required for tool selection).
-            model_handler: Optional model handler for generating example queries
+            model_handler: Optional model handler for generating semantic summaries
             cache_dir: Directory to store tool index cache (default: data/tools/selector)
-            num_queries: Number of example queries to generate per tool (default: 5)
+            num_queries: Number of semantic summaries to generate per tool (default: 5)
         """
         self.embedder = embedder
         self.model_handler = model_handler
         self.num_queries = num_queries
-        self.tool_queries: Dict[str, List[str]] = {}  # Cache generated queries
+        self.tool_queries: Dict[str, List[str]] = {}  # Cache generated summaries (kept name for compatibility)
         self.tool_descriptions: Dict[str, str] = {}  # Store tool descriptions
-        self.query_embeddings: Dict[str, List[tuple]] = {}  # Maps tool_name -> [(query, embedding), ...]
+        self.query_embeddings: Dict[str, List[tuple]] = {}  # Maps tool_name -> [(summary, embedding), ...]
         self.always_include: Set[str] = set()
         
         # Set up cache directory
@@ -61,7 +63,7 @@ class ToolSelector:
         """
         Load existing tool index from disk if available.
         
-        This preserves previously generated queries and descriptions,
+        This preserves previously generated semantic summaries and descriptions,
         avoiding regeneration on every startup.
         """
         index_file = self.cache_dir / "tool_index.json"
@@ -93,14 +95,18 @@ class ToolSelector:
     
     def _generate_example_queries(self, tool_name: str, tool_description: str) -> List[str]:
         """
-        Generate example queries that would trigger this tool.
+        Generate semantic summaries describing the tool's capabilities.
+        
+        Creates declarative statements that capture what the tool does, when to use it,
+        and what capabilities it provides. These summaries are used for semantic matching
+        against user queries to select relevant tools.
         
         Args:
             tool_name: Name of the tool
             tool_description: Description of what the tool does
             
         Returns:
-            List of example queries (configured by num_queries)
+            List of semantic summaries (configured by num_queries)
         """
         if not self.model_handler:
             return []
@@ -117,39 +123,51 @@ class ToolSelector:
             prompt = (
                 f"Tool: {tool_name}\n"
                 f"Description: {tool_description}\n\n"
-                f"Generate {self.num_queries} example user queries that would require using this tool. "
-                f"Each query should be a natural question a user might ask.\n"
-                f"Output only the queries, one per line, no numbering or extra text."
+                f"Generate {self.num_queries} comprehensive semantic summaries that describe this tool's capabilities and use cases.\n\n"
+                f"Instructions:\n"
+                f"- Generate DECLARATIVE statements (not questions) that describe DIFFERENT aspects of the tool\n"
+                f"- Each statement should be a complete, self-contained description\n"
+                f"- Focus on WHAT the tool does, WHEN to use it, WHY it's useful\n"
+                f"- Include specific capabilities, parameters, and use cases\n"
+                f"- Each statement should capture unique information that would match user queries\n"
+                f"- Statements should be rich and detailed (15-30 words each)\n"
+                f"- Each statement must be on a separate line\n"
+                f"- Do not number the statements\n"
+                f"- Use present tense and be factual\n\n"
+                f"Semantic summaries:"
             )
             
-            # Calculate max_tokens based on number of queries (roughly 40 tokens per query)
-            max_tokens = max(100, self.num_queries * 40)
+            # Calculate max_tokens based on number of summaries (roughly 50 tokens per summary)
+            max_tokens = max(150, self.num_queries * 50)
             
             response = self.model_handler.llm.create_chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
-                temperature=0.3
+                temperature=0.7,  # Increased for richer, more diverse summaries
+                stop=["\n\n", "Tool:", "---", "Instructions:"]
             )
             
             content = response['choices'][0]['message']['content'].strip()
-            queries = [q.strip() for q in content.split('\n') if q.strip()][:self.num_queries]
+            summaries = [s.strip() for s in content.split('\n') if s.strip()][:self.num_queries]
             
             # Cache the result
-            self.tool_queries[tool_name] = queries
-            return queries
+            self.tool_queries[tool_name] = summaries
+            logger.debug(f"Generated {len(summaries)} semantic summaries for tool '{tool_name}'")
+            return summaries
             
         except Exception as e:
-            logger.debug(f"Failed to generate queries for tool '{tool_name}': {e}")
+            logger.debug(f"Failed to generate semantic summaries for tool '{tool_name}': {e}")
             return []
     
     def index_tools(self, tools: Dict[str, 'Tool']):
         """
-        Index tools for semantic search.
+        Index tools for semantic search using semantic summaries.
         
-        Generates example queries for each tool and embeds them along with
-        the tool description for better semantic matching.
+        Generates declarative statements describing each tool's capabilities
+        and embeds them for matching against user queries. Each tool gets
+        multiple semantic summaries covering different aspects and use cases.
         
-        For tools already in the index, uses existing queries instead of regenerating.
+        For tools already in the index, uses existing summaries instead of regenerating.
         
         Args:
             tools: Dictionary of tool name -> Tool object
@@ -167,31 +185,31 @@ class ToolSelector:
             # Store tool description
             self.tool_descriptions[name] = tool.description
             
-            # Check if we already have queries for this tool
+            # Check if we already have summaries for this tool
             if name in self.tool_queries and self.tool_queries[name]:
-                example_queries = self.tool_queries[name]
+                semantic_summaries = self.tool_queries[name]
                 existing_tools += 1
-                logger.debug(f"Using existing {len(example_queries)} queries for tool '{name}'")
+                logger.debug(f"Using existing {len(semantic_summaries)} summaries for tool '{name}'")
             else:
-                # Generate new queries for this tool
-                example_queries = []
+                # Generate new semantic summaries for this tool
+                semantic_summaries = []
                 if self.model_handler:
-                    example_queries = self._generate_example_queries(name, tool.description)
-                    if example_queries:
+                    semantic_summaries = self._generate_example_queries(name, tool.description)
+                    if semantic_summaries:
                         new_tools += 1
-                        logger.debug(f"Generated {len(example_queries)} new queries for tool '{name}'")
+                        logger.debug(f"Generated {len(semantic_summaries)} new summaries for tool '{name}'")
             
-            # Embed each query individually
-            query_embed_list = []
-            for query in example_queries:
+            # Embed each semantic summary individually
+            summary_embed_list = []
+            for summary in semantic_summaries:
                 try:
-                    query_embedding = self.embedder.embed_single(query)
-                    query_embed_list.append((query, query_embedding))
+                    summary_embedding = self.embedder.embed_single(summary)
+                    summary_embed_list.append((summary, summary_embedding))
                 except Exception as e:
-                    logger.warning(f"Failed to embed query for tool '{name}': {e}")
+                    logger.warning(f"Failed to embed summary for tool '{name}': {e}")
             
-            if query_embed_list:
-                self.query_embeddings[name] = query_embed_list
+            if summary_embed_list:
+                self.query_embeddings[name] = summary_embed_list
         
         logger.info(f"Indexed {len(self.query_embeddings)} tools: {existing_tools} existing, {new_tools} new")
         

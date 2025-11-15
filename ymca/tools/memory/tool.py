@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 
 class MemoryTool:
     """
-    RAG-based memory system with question-based retrieval.
+    RAG-based memory system with semantic summary retrieval.
     
     Features:
     - Chunking of markdown documents
-    - Question generation for each chunk
+    - Semantic summary generation for each chunk (declarative statements, not questions)
     - ChromaDB vector store for embeddings
     - File-based chunk storage (one file per chunk)
     - Deduplication of retrieved chunks
@@ -104,13 +104,13 @@ class MemoryTool:
             model_name: Sentence transformer model name (e.g., "ibm-granite/granite-embedding-english-r2")
                        Default: IBM Granite Embedding English R2 (149M params, 768 dimensions)
             model_cache_dir: Directory to cache embedding models (default: "models")
-            model_handler: ModelHandler instance for question generation (required)
+            model_handler: ModelHandler instance for semantic summary generation (required)
             chunk_size: Chunk size in characters
             overlap: Overlap between chunks in characters
             device: Device for embeddings (None=auto, "cuda", "mps", "cpu")
         """
         if not model_handler:
-            raise ValueError("model_handler is required for question generation")
+            raise ValueError("model_handler is required for semantic summary generation")
         
         self.model_handler = model_handler
         self.memory_dir = Path(memory_dir)
@@ -128,11 +128,11 @@ class MemoryTool:
             model_handler=model_handler
         )
         
-        logger.info("✓ Using model handler for question generation")
+        logger.info("✓ Using model handler for semantic summary generation")
     
     def _process_chunk_embedding(self, chunk_text: str, chunk_id: int, max_retries: int = 3) -> tuple:
         """
-        Process a chunk: generate questions and embeddings.
+        Process a chunk: generate semantic summaries and embeddings.
         
         Args:
             chunk_text: Text of the chunk
@@ -140,7 +140,7 @@ class MemoryTool:
             max_retries: Number of retry attempts
             
         Returns:
-            Tuple of (success: bool, questions: list or None, error: str or None)
+            Tuple of (success: bool, summaries: list or None, error: str or None)
         """
         retry_delay = 0.5  # Initial delay in seconds
         
@@ -157,28 +157,28 @@ class MemoryTool:
                 if attempt > 0:
                     time.sleep(retry_delay)
                 
-                # Generate questions
-                questions = self.retriever.generate_questions(
+                # Generate semantic summaries
+                summaries = self.retriever.generate_questions(
                     chunk_text, 
                     num_questions=2
                 )
                 
-                # Generate embeddings for questions
-                question_embeddings = self.embedder.embed(questions)
+                # Generate embeddings for summaries
+                summary_embeddings = self.embedder.embed(summaries)
                 
                 # Store in vector store
-                self.vector_store.add_questions(chunk_id, questions, question_embeddings)
+                self.vector_store.add_questions(chunk_id, summaries, summary_embeddings)
                 
                 # Brief pause after successful generation to let model settle
                 time.sleep(0.05)
                 
-                return (True, questions, None)
+                return (True, summaries, None)
                 
             except (ValueError, Exception) as e:
                 error_msg = str(e)
                 if attempt < max_retries - 1:
                     logger.debug(
-                        f"Question generation failed for chunk {chunk_id} "
+                        f"Semantic summary generation failed for chunk {chunk_id} "
                         f"(attempt {attempt + 1}/{max_retries}): {error_msg}. "
                         f"Retrying in {retry_delay}s..."
                     )
