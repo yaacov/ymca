@@ -270,6 +270,14 @@ Examples:
     )
     
     parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cuda", "mps", "cpu"],
+        help="Device for embedding model (default: auto-detect - cuda > mps > cpu)"
+    )
+    
+    parser.add_argument(
         "--memory-dir",
         type=str,
         default="data/tools/memory",
@@ -344,7 +352,8 @@ Examples:
         memory_tool = MemoryTool(
             memory_dir=args.memory_dir,
             model_handler=model_handler,
-            expand_query=args.expand_query
+            expand_query=args.expand_query,
+            device=args.device
         )
         # Check memory status
         total_chunks = len(memory_tool.storage.get_all_chunks())

@@ -108,17 +108,25 @@ CMAKE_ARGS="-DGGML_VULKAN=on" pip install --upgrade --force-reinstall llama-cpp-
 YMCA attempts to use GPU acceleration by default but automatically falls back to CPU if unavailable:
 
 ```bash
-# Default: Use GPU if available, CPU otherwise
+# Default: Use GPU if available, CPU otherwise (both LLM and embeddings)
 ymca-chat
 ymca-web
 
-# Force CPU-only execution
+# Force CPU-only execution for LLM
 ymca-chat --gpu-layers 0
 ymca-web --gpu-layers 0
 
 # Partial GPU offloading (for limited VRAM)
 ymca-chat --gpu-layers 20
+
+# Control embedding model device (default: auto-detect - cuda > mps > cpu)
+ymca-chat --device cuda      # Force NVIDIA GPU
+ymca-chat --device mps       # Force Apple Silicon GPU
+ymca-chat --device cpu       # Force CPU
+ymca-web --device cuda
 ```
+
+**Note:** The `--gpu-layers` flag controls GPU acceleration for the main LLM model, while the `--device` flag controls GPU acceleration for the embedding model used by the memory system. Both default to automatic GPU detection.
 
 ## Quick Start
 

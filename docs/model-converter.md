@@ -17,7 +17,7 @@ The model converter provides:
 Download and convert a model:
 
 ```bash
-ymca-convert meta-llama/Llama-3.2-1B-Instruct
+ymca-convert --model ibm-granite/granite-4.0-h-small
 ```
 
 ### With Quantization
@@ -25,7 +25,7 @@ ymca-convert meta-llama/Llama-3.2-1B-Instruct
 Convert and quantize to 4-bit:
 
 ```bash
-ymca-convert meta-llama/Llama-3.2-1B-Instruct --quantize q4_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q4_k_m
 ```
 
 ### Download Only
@@ -33,7 +33,7 @@ ymca-convert meta-llama/Llama-3.2-1B-Instruct --quantize q4_k_m
 Download without converting:
 
 ```bash
-ymca-convert meta-llama/Llama-3.2-1B-Instruct --download-only
+ymca-convert --model ibm-granite/granite-4.0-h-small --download-only
 ```
 
 ## Installation
@@ -113,21 +113,21 @@ YMCA will automatically detect the llama.cpp directory and use it for conversion
 ### Basic Usage
 
 ```bash
-ymca-convert MODEL_NAME [OPTIONS]
+ymca-convert --model MODEL_NAME [OPTIONS]
 ```
 
 ### Model Selection
 
 ```bash
-ymca-convert MODEL_NAME              # Model name from Hugging Face
-ymca-convert org/model-name          # Full path with organization
-ymca-convert meta-llama/Llama-3.2-1B-Instruct  # Example
+ymca-convert --model MODEL_NAME              # Model name from Hugging Face
+ymca-convert --model org/model-name          # Full path with organization
+ymca-convert --model ibm-granite/granite-4.0-h-small  # Example
 ```
 
 ### Output Directory
 
 ```bash
-ymca-convert MODEL_NAME --output-dir DIR
+ymca-convert --model MODEL_NAME --output-dir DIR
 ```
 
 Default: `models/` in current directory
@@ -135,22 +135,22 @@ Default: `models/` in current directory
 ### Download Options
 
 ```bash
-ymca-convert MODEL_NAME --download-only      # Skip conversion
-ymca-convert MODEL_NAME --force-download     # Re-download existing models
-ymca-convert MODEL_NAME --token TOKEN        # HF authentication token
+ymca-convert --model MODEL_NAME --download-only      # Skip conversion
+ymca-convert --model MODEL_NAME --force-download     # Re-download existing models
+ymca-convert --model MODEL_NAME --token TOKEN        # HF authentication token
 ```
 
 ### Conversion Options
 
 ```bash
-ymca-convert MODEL_NAME --output-type TYPE   # F32, F16, or Q8_0 (default: F16)
-ymca-convert MODEL_NAME --quantize QUANT     # Quantization method
+ymca-convert --model MODEL_NAME --output-type TYPE   # F32, F16, or Q8_0 (default: F16)
+ymca-convert --model MODEL_NAME --quantize QUANT     # Quantization method
 ```
 
 ### Logging
 
 ```bash
-ymca-convert MODEL_NAME --verbose            # Detailed logging
+ymca-convert --model MODEL_NAME --verbose            # Detailed logging
 ```
 
 ## Quantization Methods
@@ -177,25 +177,25 @@ Quantization reduces model size and memory usage while maintaining accuracy.
 
 **Best Overall Quality (q5_k_m)**
 ```bash
-ymca-convert model-name --quantize q5_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q5_k_m
 ```
 Excellent balance of size, speed, and quality.
 
 **Best for Limited RAM (q4_k_m)**
 ```bash
-ymca-convert model-name --quantize q4_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q4_k_m
 ```
 Good quality with significant size reduction.
 
 **Maximum Quality (q8_0)**
 ```bash
-ymca-convert model-name --quantize q8_0
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q8_0
 ```
 Minimal quality loss, still 50% smaller than f16.
 
 **Aggressive Compression (q3_k_m)**
 ```bash
-ymca-convert model-name --quantize q3_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q3_k_m
 ```
 For very limited hardware, acceptable quality loss.
 
@@ -217,7 +217,7 @@ Control the initial GGUF conversion format:
 
 ### F16 (Default)
 ```bash
-ymca-convert model-name --output-type F16
+ymca-convert --model ibm-granite/granite-4.0-h-small --output-type F16
 ```
 - Half precision (16-bit floats)
 - Good balance for most models
@@ -225,7 +225,7 @@ ymca-convert model-name --output-type F16
 
 ### F32
 ```bash
-ymca-convert model-name --output-type F32
+ymca-convert --model ibm-granite/granite-4.0-h-small --output-type F32
 ```
 - Full precision (32-bit floats)
 - Highest quality, largest size
@@ -233,7 +233,7 @@ ymca-convert model-name --output-type F32
 
 ### Q8_0
 ```bash
-ymca-convert model-name --output-type Q8_0
+ymca-convert --model ibm-granite/granite-4.0-h-small --output-type Q8_0
 ```
 - 8-bit quantization
 - Direct conversion without F16 intermediate
@@ -247,11 +247,11 @@ For private or gated models:
 
 ```bash
 # Via command line
-ymca-convert model-name --token YOUR_HF_TOKEN
+ymca-convert --model ibm-granite/granite-4.0-h-small --token YOUR_HF_TOKEN
 
 # Via environment variable
 export HF_TOKEN=YOUR_HF_TOKEN
-ymca-convert model-name
+ymca-convert --model ibm-granite/granite-4.0-h-small
 ```
 
 ### Getting a Token
@@ -266,17 +266,17 @@ ymca-convert model-name
 
 1. **Download** from Hugging Face:
    ```bash
-   ymca-convert meta-llama/Llama-3.2-1B-Instruct --download-only
+   ymca-convert --model ibm-granite/granite-4.0-h-small --download-only
    ```
 
 2. **Convert** to GGUF (F16):
    ```bash
-   ymca-convert meta-llama/Llama-3.2-1B-Instruct
+   ymca-convert --model ibm-granite/granite-4.0-h-small
    ```
 
 3. **Quantize** to desired level:
    ```bash
-   ymca-convert meta-llama/Llama-3.2-1B-Instruct --quantize q4_k_m
+   ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q4_k_m
    ```
 
 ### All-in-One
@@ -284,7 +284,7 @@ ymca-convert model-name
 Download, convert, and quantize in one command:
 
 ```bash
-ymca-convert meta-llama/Llama-3.2-1B-Instruct --quantize q4_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q4_k_m
 ```
 
 ## Output Structure
@@ -293,29 +293,36 @@ Models are organized by name:
 
 ```
 models/
-└── meta-llama_llama-3.2-1b-instruct/
-    ├── model/                    # Original downloaded model
+└── ibm-granite_granite-4.0-h-small/
+    ├── safetensor/               # Original downloaded model
     │   ├── config.json
-    │   ├── model.safetensors
+    │   ├── model-00001-of-00014.safetensors
+    │   ├── model.safetensors.index.json
     │   └── tokenizer.json
     └── gguf/                     # Converted GGUF files
-        ├── meta-llama_llama-3.2-1b-instruct-f16.gguf
-        ├── meta-llama_llama-3.2-1b-instruct-q4_k_m.gguf
-        └── meta-llama_llama-3.2-1b-instruct-q5_k_m.gguf
+        ├── ibm-granite_granite-4.0-h-small-f16.gguf
+        ├── ibm-granite_granite-4.0-h-small-q4_k_m.gguf
+        └── ibm-granite_granite-4.0-h-small-q5_k_m.gguf
 ```
 
 ## Examples
 
-### Convert IBM Granite Model
+### Convert IBM Granite Small Model (30B parameters)
 
 ```bash
-ymca-convert ibm-granite/granite-4.0-h-tiny --quantize q4_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q4_k_m
+```
+
+### Convert IBM Granite Tiny Model (350M parameters)
+
+```bash
+ymca-convert --model ibm-granite/granite-4.0-h-350m --quantize q4_k_m
 ```
 
 ### Convert with Custom Output Directory
 
 ```bash
-ymca-convert meta-llama/Llama-3.2-1B-Instruct \
+ymca-convert --model ibm-granite/granite-4.0-h-small \
   --output-dir /path/to/models \
   --quantize q5_k_m
 ```
@@ -324,11 +331,11 @@ ymca-convert meta-llama/Llama-3.2-1B-Instruct \
 
 ```bash
 # Q4 for speed
-ymca-convert model-name --quantize q4_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q4_k_m
 
 # Q5 for balance
-ymca-convert model-name --quantize q5_k_m
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q5_k_m
 
 # Q8 for quality
-ymca-convert model-name --quantize q8_0
+ymca-convert --model ibm-granite/granite-4.0-h-small --quantize q8_0
 ```

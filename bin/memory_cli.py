@@ -73,7 +73,8 @@ def cmd_store(args):
         memory_dir=args.memory_dir,
         model_handler=handler,
         chunk_size=args.chunk_size,
-        overlap=args.overlap
+        overlap=args.overlap,
+        device=args.device
     )
     
     # Store text
@@ -98,7 +99,8 @@ def cmd_retrieve(args):
     handler = ModelHandler(model_path=args.model, n_ctx=args.context)
     memory = MemoryTool(
         memory_dir=args.memory_dir,
-        model_handler=handler
+        model_handler=handler,
+        device=args.device
     )
     
     # Retrieve
@@ -142,7 +144,8 @@ def cmd_clear(args):
     handler = ModelHandler(model_path=args.model, n_ctx=args.context)
     memory = MemoryTool(
         memory_dir=args.memory_dir,
-        model_handler=handler
+        model_handler=handler,
+        device=args.device
     )
     
     print("Clearing memory...")
@@ -321,7 +324,8 @@ def cmd_load_docs(args):
         memory_dir=args.memory_dir,
         model_handler=handler,
         chunk_size=args.chunk_size,
-        overlap=args.overlap
+        overlap=args.overlap,
+        device=args.device
     )
     
     # Load documents
@@ -446,6 +450,14 @@ def main():
         "--verbose",
         action="store_true",
         help="Enable verbose logging"
+    )
+    
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cuda", "mps", "cpu"],
+        help="Device for embedding model (default: auto-detect - cuda > mps > cpu)"
     )
     
     # Subcommands

@@ -239,7 +239,8 @@ def initialize_chat_api(args):
     memory_tool = MemoryTool(
         memory_dir=args.memory_dir,
         model_handler=model_handler,
-        expand_query=args.expand_query
+        expand_query=args.expand_query,
+        device=args.device
     )
     total_chunks = len(memory_tool.storage.get_all_chunks())
     if total_chunks == 0:
@@ -383,6 +384,14 @@ Examples:
         type=int,
         default=-1,
         help="Number of layers to offload to GPU (default: -1 = all, 0 = CPU only)"
+    )
+    
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        choices=["cuda", "mps", "cpu"],
+        help="Device for embedding model (default: auto-detect - cuda > mps > cpu)"
     )
     
     parser.add_argument(
