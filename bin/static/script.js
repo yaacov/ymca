@@ -87,7 +87,7 @@ function addMessage(role, content, timestamp = null) {
     
     let icon, label;
     if (role === 'user') {
-        icon = '🧑';
+        icon = '💬';
         label = 'You';
     } else if (role === 'assistant') {
         icon = '🤖';

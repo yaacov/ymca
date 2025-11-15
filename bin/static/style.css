@@ -195,7 +195,6 @@ body {
 
 .system-message .message-content {
     background: var(--message-system-bg);
-    border-left: 4px solid var(--success-color);
 }
 
 /* Markdown Styling */
