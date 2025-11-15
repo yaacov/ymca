@@ -14,6 +14,11 @@ const enablePlanning = document.getElementById('enable-planning');
 const refineAnswer = document.getElementById('refine-answer');
 const temperatureSlider = document.getElementById('temperature');
 const temperatureValue = document.getElementById('temperature-value');
+const thinkingTimer = document.getElementById('thinking-timer');
+
+// Timer variables
+let timerInterval = null;
+let timerStartTime = null;
 
 // Configure marked for markdown rendering
 marked.setOptions({
@@ -31,12 +36,34 @@ marked.setOptions({
 
 // ==================== Utility Functions ====================
 
+function updateTimer() {
+    if (timerStartTime) {
+        const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        
+        if (minutes > 0) {
+            thinkingTimer.textContent = `${minutes}m ${seconds}s`;
+        } else {
+            thinkingTimer.textContent = `${seconds}s`;
+        }
+    }
+}
+
 function showLoading() {
     loadingModal.classList.add('active');
+    timerStartTime = Date.now();
+    thinkingTimer.textContent = '0s';
+    timerInterval = setInterval(updateTimer, 100);
 }
 
 function hideLoading() {
     loadingModal.classList.remove('active');
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    timerStartTime = null;
 }
 
 function scrollToBottom() {
