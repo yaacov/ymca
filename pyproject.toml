@@ -82,7 +82,7 @@ Repository = "https://github.com/yaacov/ymca"
 Issues = "https://github.com/yaacov/ymca/issues"
 
 [tool.setuptools]
-packages = ["ymca", "ymca.core", "ymca.chat", "ymca.tools"]
+packages = ["ymca", "ymca.core", "ymca.chat", "ymca.tools", "bin", "bin.converter"]
 
 [tool.setuptools.package-data]
 ymca = ["py.typed"]
