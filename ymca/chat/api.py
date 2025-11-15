@@ -406,8 +406,8 @@ CRITICAL INSTRUCTIONS:
             max_tokens=512  # Room for detailed answer with examples
         )
         
-        # Add new messages to history
-        self._add_messages_to_history(new_messages)
+        # Determine the final answer to return (and store in history)
+        final_answer = final_response
         
         # Optional refinement step
         if refine_answer and final_response:
@@ -419,7 +419,7 @@ CRITICAL INSTRUCTIONS:
                     temperature=0.3
                 )
                 logger.info("Answer refinement completed successfully")
-                return refined_response
+                final_answer = refined_response
             except Exception as e:
                 error_msg = str(e)
                 logger.warning(f"Answer refinement failed: {error_msg}")
@@ -430,21 +430,32 @@ CRITICAL INSTRUCTIONS:
                 elif "out of memory" in error_msg.lower():
                     logger.warning("Out of memory during refinement. Try reducing context size or disabling refinement.")
                 
-                # Always return the original response
+                # Use original response as fallback
                 logger.info("Returning original unrefined response")
-                return final_response
+                final_answer = final_response
         
-        return final_response
+        # Add messages to history with the final answer
+        self._add_messages_to_history(new_messages, final_answer)
+        
+        return final_answer
     
-    def _add_messages_to_history(self, messages: List[Dict]):
-        """Add messages from chat engine to conversation history."""
+    def _add_messages_to_history(self, messages: List[Dict], final_answer: str = None):
+        """
+        Add messages from chat engine to conversation history.
+        
+        Args:
+            messages: List of messages from chat engine
+            final_answer: The final answer to store (if different from raw response due to refinement)
+        """
         for msg in messages:
             role = msg['role']
             content = msg.get('content', '')
             
             if role == 'assistant':
                 tool_calls = msg.get('tool_calls')
-                self.history.add_assistant_message(content, tool_calls=tool_calls)
+                # Use final_answer if provided, otherwise use the original content
+                assistant_content = final_answer if final_answer is not None else content
+                self.history.add_assistant_message(assistant_content, tool_calls=tool_calls)
             elif role == 'tool':
                 self.history.add_tool_message(
                     name=msg.get('name'),
