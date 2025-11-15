@@ -94,7 +94,8 @@ class MemoryTool:
         model_handler = None,
         chunk_size: int = 4000,
         overlap: int = 400,
-        device: str = None
+        device: str = None,
+        expand_query: bool = False
     ):
         """
         Initialize the memory tool.
@@ -108,6 +109,7 @@ class MemoryTool:
             chunk_size: Chunk size in characters
             overlap: Overlap between chunks in characters
             device: Device for embeddings (None=auto, "cuda", "mps", "cpu")
+            expand_query: Whether to expand short queries using LLM for better matching (default: False)
         """
         if not model_handler:
             raise ValueError("model_handler is required for semantic summary generation")
@@ -115,6 +117,7 @@ class MemoryTool:
         self.model_handler = model_handler
         self.memory_dir = Path(memory_dir)
         self.memory_dir.mkdir(parents=True, exist_ok=True)
+        self.expand_query = expand_query  # App-level configuration
         
         # Initialize components
         self.chunker = TextChunker(chunk_size=chunk_size, overlap=overlap)
@@ -305,14 +308,14 @@ class MemoryTool:
         
         return still_pending
     
-    def retrieve_memory(self, query: str, top_k: int = 3, expand_query: bool = True) -> List[Dict]:
+    def retrieve_memory(self, query: str, top_k: int = 3, expand_query: bool = False) -> List[Dict]:
         """
         Retrieve relevant memories.
         
         Args:
             query: Search query
             top_k: Number of results to return (default: 3)
-            expand_query: Whether to expand query using LLM (default: True)
+            expand_query: Whether to expand query using LLM (default: False)
             
         Returns:
             List of results with text, source, and similarity
@@ -360,7 +363,8 @@ class MemoryTool:
             Returns:
                 Formatted memory results
             """
-            results = self.retrieve_memory(query, top_k=max_results, expand_query=True)
+            # Use app-level expand_query configuration
+            results = self.retrieve_memory(query, top_k=max_results, expand_query=self.expand_query)
             
             if not results:
                 return "No relevant information found in memory"

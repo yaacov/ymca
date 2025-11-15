@@ -176,6 +176,12 @@ Examples:
     )
     
     parser.add_argument(
+        "--expand-query",
+        action="store_true",
+        help="Enable LLM-based query expansion for short memory queries (default: disabled)"
+    )
+    
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose logging"
@@ -230,7 +236,8 @@ Examples:
         print("\n2️⃣  Loading memory tool...")
         memory_tool = MemoryTool(
             memory_dir=args.memory_dir,
-            model_handler=model_handler
+            model_handler=model_handler,
+            expand_query=args.expand_query
         )
         # Check memory status
         total_chunks = len(memory_tool.storage.get_all_chunks())

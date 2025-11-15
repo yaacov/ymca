@@ -1,86 +1,145 @@
 """
-Question Parser - Utilities for parsing and cleaning LLM-generated questions.
+Statement Parser - Utilities for parsing and cleaning LLM-generated semantic summaries.
+
+Parses declarative statements from LLM output.
 """
 
 from typing import List
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
 
 def parse_questions_from_text(text: str, expected_count: int = 3) -> List[str]:
     """
-    Parse and clean questions from LLM-generated text.
+    Parse and clean semantic summaries from LLM-generated text.
     
     This handles common LLM output formats:
-    - Numbered lists: "1. Question?", "2) Question?"
-    - Bulleted lists: "• Question?", "- Question?"
-    - Plain text: One question per line
-    - Multiple questions on same line: "Question1? Question2?"
+    - Declarative statements: "The tool does X and provides Y capabilities."
+    - Numbered lists: "1. Statement", "2) Statement"
+    - Bulleted lists: "• Statement", "- Statement"
+    - Plain text: One statement per line
     
     Args:
-        text: Raw text containing questions
-        expected_count: Expected number of questions
+        text: Raw text containing statements
+        expected_count: Expected number of statements
         
     Returns:
-        List of cleaned question strings
+        List of cleaned statement strings
         
     Raises:
-        ValueError: If fewer than expected_count questions were found
+        ValueError: If no statements were found
     """
-    questions = []
+    # Parse statements line-by-line
+    statements = _parse_by_lines(text)
     
-    # Strategy: Split by '?' first to separate questions that might be on same line
-    # Then clean and validate each potential question
-    parts = text.split('?')
+    # If we have more than needed, take first N
+    if len(statements) > expected_count:
+        logger.debug(f"Generated {len(statements)} statements, keeping first {expected_count}")
+        statements = statements[:expected_count]
     
-    for part in parts:
-        part = part.strip()
-        
-        # Skip empty parts
-        if not part:
-            continue
-        
-        # Each part should be a question without the '?'
-        # Clean it up and add the '?' back
-        cleaned = _remove_question_prefix(part).strip()
-        
-        if cleaned:
-            # Add question mark back
-            question = cleaned + '?'
-            questions.append(question)
-    
-    # Limit to expected count
-    if len(questions) > expected_count:
-        logger.debug(f"Generated {len(questions)} questions, keeping first {expected_count}")
-        questions = questions[:expected_count]
-    
-    # Fail if we don't have enough questions
-    if len(questions) < expected_count:
+    # Validate we got at least one statement
+    if len(statements) == 0:
         raise ValueError(
-            f"Failed to parse {expected_count} questions from text. "
-            f"Only found {len(questions)}. Text: {text[:200]}"
+            f"Failed to parse any statements from text. Text: {text[:200]}"
         )
     
-    return questions
-
-
-def _remove_question_prefix(text: str) -> str:
-    """
-    Remove numbering and bullet prefixes from question text.
+    if len(statements) < expected_count:
+        logger.warning(
+            f"Expected {expected_count} statements but only found {len(statements)}. "
+            f"Continuing with {len(statements)} statements."
+        )
     
-    Handles formats like:
-    - "1. Question?" -> "Question?"
-    - "2) Question?" -> "Question?"
-    - "• Question?" -> "Question?"
-    - "- Question?" -> "Question?"
+    return statements
+
+
+def _parse_by_lines(text: str) -> List[str]:
+    """
+    Parse declarative statements by splitting on newlines.
     
     Args:
-        text: Question text with possible prefix
+        text: Raw text containing statements
         
     Returns:
-        Cleaned question text
+        List of cleaned statements
     """
-    # Strip common prefixes: digits, dots, parens, bullets, dashes, spaces
-    return text.lstrip('0123456789.)-• ').strip()
+    statements = []
+    lines = text.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Skip empty lines
+        if not line:
+            continue
+        
+        # Skip lines that look like instructions/prompts
+        if _is_instruction_line(line):
+            continue
+        
+        # Clean the line (remove numbering, bullets, trailing punctuation, etc.)
+        cleaned = _remove_prefix(line).strip()
+        
+        # Remove trailing question marks from legacy cached data
+        cleaned = cleaned.rstrip('?').strip()
+        
+        # Validate: must be substantial (at least 10 words)
+        if cleaned and len(cleaned.split()) >= 10:
+            statements.append(cleaned)
+    
+    return statements
+
+
+def _remove_prefix(text: str) -> str:
+    """
+    Remove numbering and bullet prefixes from text.
+    
+    Handles formats like:
+    - "1. Statement" -> "Statement"
+    - "2) Statement" -> "Statement"
+    - "• Statement" -> "Statement"
+    - "- Statement" -> "Statement"
+    - "* Statement" -> "Statement"
+    
+    Args:
+        text: Text with possible prefix
+        
+    Returns:
+        Cleaned text
+    """
+    # Strip common prefixes: digits, dots, parens, bullets, dashes, asterisks, spaces
+    cleaned = text.lstrip('0123456789.)-•*# ').strip()
+    
+    # Also handle patterns like "1." or "a)" at the start
+    cleaned = re.sub(r'^[0-9a-zA-Z]+[\.)]\s+', '', cleaned)
+    
+    return cleaned
+
+
+def _is_instruction_line(line: str) -> bool:
+    """
+    Check if a line looks like an instruction/prompt rather than a statement.
+    
+    Args:
+        line: Line to check
+        
+    Returns:
+        True if line looks like instruction/prompt
+    """
+    instruction_keywords = [
+        'generate',
+        'instructions:',
+        'text:',
+        'semantic summaries:',
+        'tool:',
+        'description:',
+        'output only',
+        'each statement',
+        'do not number',
+        'use present tense'
+    ]
+    
+    line_lower = line.lower()
+    return any(keyword in line_lower for keyword in instruction_keywords)
 

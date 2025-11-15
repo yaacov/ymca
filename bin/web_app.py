@@ -236,7 +236,8 @@ def initialize_chat_api(args):
     logging.info("Loading memory tool...")
     memory_tool = MemoryTool(
         memory_dir=args.memory_dir,
-        model_handler=model_handler
+        model_handler=model_handler,
+        expand_query=args.expand_query
     )
     total_chunks = len(memory_tool.storage.get_all_chunks())
     if total_chunks == 0:
@@ -384,6 +385,12 @@ Examples:
         type=str,
         default="data/tools/memory",
         help="Memory storage directory"
+    )
+    
+    parser.add_argument(
+        "--expand-query",
+        action="store_true",
+        help="Enable LLM-based query expansion for short memory queries (default: disabled)"
     )
     
     parser.add_argument(

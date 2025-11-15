@@ -92,14 +92,14 @@ Expanded query:"""
             logger.warning(f"Query expansion failed: {e}, using original query")
             return query
     
-    def retrieve(self, query: str, top_k: int = 3, expand_query: bool = True) -> List[Dict]:
+    def retrieve(self, query: str, top_k: int = 3, expand_query: bool = False) -> List[Dict]:
         """
         Retrieve relevant memories.
         
         Args:
             query: Search query
             top_k: Number of results
-            expand_query: Whether to expand the query using LLM (default: True)
+            expand_query: Whether to expand the query using LLM (default: False)
             
         Returns:
             List of results with text, source, and similarity (deduplicated by chunk_id)
