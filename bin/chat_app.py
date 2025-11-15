@@ -18,19 +18,80 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ymca.core.model_handler import ModelHandler
-from ymca.core.ui import ThinkingSpinner, print_markdown
+from ymca.core.ui import (
+    ThinkingSpinner, 
+    print_markdown, 
+    print_user_input,
+    print_assistant_response,
+    print_system_message,
+    print_tool_call
+)
 from ymca.tools.memory.tool import MemoryTool
 from ymca.tools.mcp.client import MCPClient
 from ymca.chat.api import ChatAPI
 
 
+class StyledLogHandler(logging.Handler):
+    """Custom log handler that styles specific log messages."""
+    
+    def emit(self, record):
+        """Handle log records with custom styling."""
+        msg = record.getMessage()
+        
+        # Style tool-related messages
+        if "Parsed tool call:" in msg:
+            tool_name = msg.split("Parsed tool call:", 1)[1].strip()
+            print_system_message(f"Parsed tool call: {tool_name}", style="dim yellow")
+        elif "Calling tool:" in msg:
+            tool_name = msg.split("Calling tool:", 1)[1].strip()
+            print_tool_call(tool_name, status="calling")
+        elif "Calling MCP tool:" in msg:
+            tool_name = msg.split("Calling MCP tool:", 1)[1].strip()
+            print_system_message(f"Calling MCP tool: {tool_name}", style="bold yellow")
+        elif "Answer refinement completed" in msg:
+            print_system_message("Answer refinement completed ✓", style="dim green")
+        elif "Answer refinement failed" in msg:
+            print_system_message("Answer refinement skipped (using original response)", style="dim yellow")
+        elif record.levelno == logging.WARNING and "Answer refinement" in msg:
+            # Skip duplicate refinement warnings (already handled above)
+            pass
+        elif record.levelno == logging.ERROR:
+            print_system_message(f"Error: {msg}", style="bold red")
+        elif record.levelno == logging.WARNING and not msg.startswith("Answer refinement"):
+            print_system_message(f"Warning: {msg}", style="yellow")
+        # Skip debug messages unless verbose mode
+        elif record.levelno > logging.DEBUG:
+            print_system_message(msg, style="dim")
+
+
 def setup_logging(verbose: bool = False):
     """Setup logging configuration."""
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format='%(message)s' if not verbose else '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    
+    # Create root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    
+    # Remove default handlers
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    
+    # Add custom styled handler for chat-related logs
+    styled_handler = StyledLogHandler()
+    styled_handler.setLevel(logging.INFO)
+    styled_handler.addFilter(lambda record: record.name.startswith('chat') or 
+                                           record.name.startswith('ymca') or
+                                           'tool' in record.getMessage().lower())
+    root_logger.addHandler(styled_handler)
+    
+    # Add standard handler for verbose mode or other logs
+    if verbose:
+        standard_handler = logging.StreamHandler()
+        standard_handler.setLevel(logging.DEBUG)
+        standard_handler.setFormatter(
+            logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        )
+        root_logger.addHandler(standard_handler)
     
     # Suppress sentence-transformers verbose logging
     logging.getLogger('sentence_transformers').setLevel(logging.WARNING)
@@ -62,7 +123,7 @@ def print_section(title: str):
     print("=" * 70)
 
 
-def interactive_chat(chat: ChatAPI):
+def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
     """Interactive chat mode."""
     print_section("INTERACTIVE CHAT")
     
@@ -76,6 +137,10 @@ def interactive_chat(chat: ChatAPI):
     print("  - The assistant can search memory if data is loaded")
     print("  - Run with --debug for detailed logging")
     print("  - Run with --verbose for full error traces")
+    if refine_answers:
+        print("  - Answer refinement is ENABLED (responses are polished for clarity)")
+    else:
+        print("  - Answer refinement is DISABLED (use without --no-refine-answers to enable)")
     print("\n" + "=" * 70)
     
     while True:
@@ -92,26 +157,31 @@ def interactive_chat(chat: ChatAPI):
             
             elif user_input.lower() == 'clear':
                 chat.clear_history()
-                print("✓ Conversation history cleared")
+                print_system_message("Conversation history cleared", style="bold green")
                 continue
             
             elif user_input.lower() == 'summary':
-                print("\n📋 Conversation Summary:")
+                print_system_message("Conversation Summary:", style="bold blue")
                 print(chat.get_history_summary())
                 continue
             
             elif user_input.lower() == 'export':
                 conversation = chat.export_conversation()
-                print(f"\n✓ Exported {len(conversation)} messages")
-                print("(In a real app, this would save to a file)")
+                print_system_message(f"Exported {len(conversation)} messages", style="bold green")
+                print_system_message("(In a real app, this would save to a file)", style="dim")
                 continue
             
             # Regular chat
             with ThinkingSpinner("🤔 Thinking"):
-                response = chat.chat(user_input, enable_tools=True, enable_planning=True)
+                response = chat.chat(
+                    user_input, 
+                    enable_tools=True, 
+                    enable_planning=True,
+                    refine_answer=refine_answers
+                )
             
-            print("\n🤖 Assistant:")
-            print_markdown(response)
+            # Print response with enhanced styling
+            print_assistant_response(response)
             
         except KeyboardInterrupt:
             print("\n\n👋 Goodbye!")
@@ -127,8 +197,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run interactive chat
+  # Run interactive chat (answer refinement enabled by default)
   python chat_app.py
+
+  # Disable answer refinement for faster responses
+  python chat_app.py --no-refine-answers
 
   # With custom model
   python chat_app.py --model path/to/model.gguf
@@ -206,6 +279,12 @@ Examples:
         type=str,
         metavar="PROMPT",
         help="Custom system prompt (use @filename to load from file, e.g., @docs/mtv-system-prompt.txt)"
+    )
+    
+    parser.add_argument(
+        "--no-refine-answers",
+        action="store_true",
+        help="Disable answer refinement step (default: enabled)"
     )
     
     args = parser.parse_args()
@@ -344,10 +423,14 @@ Examples:
         
         print("\n" + "=" * 70)
         print("🚀 All systems ready!")
+        if args.no_refine_answers:
+            print("📝 Answer refinement: DISABLED")
+        else:
+            print("📝 Answer refinement: ENABLED")
         print("=" * 70)
         
         # Run interactive chat
-        interactive_chat(chat)
+        interactive_chat(chat, refine_answers=not args.no_refine_answers)
         
     except KeyboardInterrupt:
         print("\n\n👋 Interrupted by user")

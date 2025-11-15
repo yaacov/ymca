@@ -7,9 +7,70 @@ import threading
 import time
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.text import Text
 
 # Global console instance for consistent rendering
 console = Console()
+
+
+def print_user_input(text: str):
+    """
+    Print user input with distinctive styling.
+    
+    Args:
+        text: User's input text
+    """
+    console.print()  # Add spacing
+    user_text = Text()
+    user_text.append("🧑 You: ", style="bold cyan")
+    user_text.append(text, style="white")
+    console.print(user_text)
+
+
+def print_assistant_response(text: str):
+    """
+    Print assistant response with markdown formatting in a panel.
+    
+    Args:
+        text: Assistant's response (markdown)
+    """
+    console.print()  # Add spacing
+    console.print("🤖 Assistant:", style="bold green")
+    console.print("─" * console.width, style="dim green")
+    
+    # Render markdown
+    md = Markdown(text)
+    console.print(md)
+    console.print("─" * console.width, style="dim green")
+
+
+def print_system_message(text: str, style: str = "dim yellow"):
+    """
+    Print system message (tool calls, status updates).
+    
+    Args:
+        text: System message text
+        style: Rich style string (default: dim yellow)
+    """
+    console.print(f"  ℹ️  {text}", style=style)
+
+
+def print_tool_call(tool_name: str, status: str = "calling"):
+    """
+    Print tool call status with distinctive styling.
+    
+    Args:
+        tool_name: Name of the tool being called
+        status: Status string (e.g., "calling", "completed", "failed")
+    """
+    if status == "calling":
+        console.print(f"  🔧 Calling tool: ", style="bold yellow", end="")
+        console.print(tool_name, style="bold white")
+    elif status == "completed":
+        console.print(f"  ✓ Tool completed: {tool_name}", style="dim green")
+    elif status == "failed":
+        console.print(f"  ✗ Tool failed: {tool_name}", style="dim red")
 
 
 def print_markdown(text: str):

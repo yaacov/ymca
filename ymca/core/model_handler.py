@@ -211,3 +211,64 @@ Semantic summaries:"""
                 kwargs["tool_choice"] = tool_choice
         
         return self.llm.create_chat_completion(**kwargs)
+    
+    def refine_answer(self, original_query: str, raw_response: str, temperature: float = 0.3) -> str:
+        """
+        Refine a raw LLM response to improve clarity, formatting, and readability.
+        
+        This optional post-processing step takes the original user query and raw response,
+        then asks the LLM to polish the answer while preserving technical accuracy.
+        
+        Args:
+            original_query: The user's original question
+            raw_response: The raw response from the LLM
+            temperature: Lower temperature for more consistent refinement (default: 0.3)
+            
+        Returns:
+            Refined response string
+            
+        Raises:
+            Exception: If refinement fails (caller should handle and return original)
+        """
+        # Reset model state to clear KV cache from previous interactions
+        # This prevents context overflow issues during refinement
+        try:
+            self.reset_state(deep_clean=False)
+        except Exception as e:
+            logger.warning(f"Failed to reset model state before refinement: {e}")
+        
+        # Truncate very long responses to prevent context overflow
+        max_response_length = 2000  # chars (~500 tokens)
+        if len(raw_response) > max_response_length:
+            logger.warning(f"Raw response too long ({len(raw_response)} chars), truncating to {max_response_length}")
+            raw_response = raw_response[:max_response_length] + "\n\n[Response truncated for refinement]"
+        
+        refinement_prompt = f"""You are an expert technical writer. Your task is to refine and improve the following response while maintaining complete technical accuracy.
+
+Original User Query:
+{original_query}
+
+Raw Response:
+{raw_response}
+
+Instructions for refinement:
+1. **Improve Clarity**: Make the response easier to understand without losing technical precision
+2. **Better Formatting**: Use clear structure with appropriate markdown (headers, lists, code blocks)
+3. **Conciseness**: Remove redundancy while keeping all essential information
+4. **Polish Language**: Improve readability and flow
+5. **Preserve Accuracy**: Do NOT change any technical facts, commands, parameters, or examples
+6. **Keep Examples**: Maintain all code examples and technical details exactly as provided
+
+Output ONLY the refined response, with no preamble or explanation. Begin immediately with the improved answer."""
+
+        response = self.llm.create_chat_completion(
+            messages=[{"role": "user", "content": refinement_prompt}],
+            max_tokens=1024,  # Allow room for well-formatted response
+            temperature=temperature,
+            stop=None
+        )
+        
+        refined_text = response['choices'][0]['message']['content'].strip()
+        logger.debug(f"Refined response ({len(raw_response)} → {len(refined_text)} chars)")
+        
+        return refined_text

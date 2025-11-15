@@ -11,6 +11,7 @@ const exportBtn = document.getElementById('export-btn');
 const loadingModal = document.getElementById('loading-modal');
 const enableTools = document.getElementById('enable-tools');
 const enablePlanning = document.getElementById('enable-planning');
+const refineAnswer = document.getElementById('refine-answer');
 const temperatureSlider = document.getElementById('temperature');
 const temperatureValue = document.getElementById('temperature-value');
 
@@ -127,6 +128,7 @@ async function sendMessage(message) {
                 message: message,
                 enable_tools: enableTools.checked,
                 enable_planning: enablePlanning.checked,
+                refine_answer: refineAnswer.checked,
                 temperature: parseFloat(temperatureSlider.value),
                 max_iterations: 5
             })

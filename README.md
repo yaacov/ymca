@@ -24,7 +24,10 @@ Built-in memory system using ChromaDB for vector storage and sentence transforme
 All processing happens locally. Your conversations, data, and model interactions never leave your machine, ensuring complete privacy and data sovereignty.
 
 ### Intelligent Tool Selection
-YMCA implements **selective context loading** (also known as tool selection) to optimize context window usage. Instead of loading all available tools into the model's context, the system uses semantic search to identify and provide only the most relevant tools for each query. This technique significantly reduces the token count in system prompts, enabling:
+YMCA implements **selective context loading** (also known as tool selection) to optimize context window usage. Instead of loading all available tools into the model's context, the system uses semantic search to identify and provide only the most relevant tools for each query. This technique significantly reduces the token count in system prompts, enabling more efficient use of limited context windows.
+
+### Answer Refinement
+Automatic post-processing step that improves response clarity and formatting while preserving technical accuracy. Responses are polished for better readability, structure, and presentation. Enabled by default (disable with `--no-refine-answers` flag or uncheck the web UI checkbox).
 
 
 ## Installation

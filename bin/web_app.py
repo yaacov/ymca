@@ -58,6 +58,7 @@ class ChatRequest(BaseModel):
     enable_planning: bool = True
     max_iterations: int = 5
     temperature: float = 0.7
+    refine_answer: bool = True
 
 
 class ChatResponse(BaseModel):
@@ -162,7 +163,8 @@ async def chat(request: ChatRequest):
             max_iterations=request.max_iterations,
             temperature=request.temperature,
             enable_tools=request.enable_tools,
-            enable_planning=request.enable_planning
+            enable_planning=request.enable_planning,
+            refine_answer=request.refine_answer
         )
         
         return ChatResponse(response=response)
@@ -336,8 +338,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run web server
+  # Run web server (answer refinement enabled by default)
   python web_app.py
+
+  # Disable answer refinement for faster responses
+  python web_app.py --no-refine-answers
 
   # With custom model
   python web_app.py --model path/to/model.gguf
@@ -432,6 +437,12 @@ Examples:
         type=str,
         metavar="PROMPT",
         help="Custom system prompt (use @filename to load from file, e.g., @docs/mtv-system-prompt.txt)"
+    )
+    
+    parser.add_argument(
+        "--no-refine-answers",
+        action="store_true",
+        help="Disable answer refinement by default for all requests (default: enabled, can be overridden per request)"
     )
     
     args = parser.parse_args()

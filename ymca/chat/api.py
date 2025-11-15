@@ -345,7 +345,8 @@ CRITICAL INSTRUCTIONS:
         max_iterations: int = 5,
         temperature: float = 0.7,
         enable_tools: bool = True,
-        enable_planning: bool = True
+        enable_planning: bool = True,
+        refine_answer: bool = True
     ) -> str:
         """
         Send a message and get a response.
@@ -356,6 +357,7 @@ CRITICAL INSTRUCTIONS:
             temperature: LLM temperature
             enable_tools: Enable tool calling
             enable_planning: Enable multi-step planning (currently unused)
+            refine_answer: Enable optional answer refinement step (default: True)
             
         Returns:
             Assistant's response
@@ -406,6 +408,31 @@ CRITICAL INSTRUCTIONS:
         
         # Add new messages to history
         self._add_messages_to_history(new_messages)
+        
+        # Optional refinement step
+        if refine_answer and final_response:
+            logger.debug("Applying answer refinement...")
+            try:
+                refined_response = self.model_handler.refine_answer(
+                    original_query=user_message,
+                    raw_response=final_response,
+                    temperature=0.3
+                )
+                logger.info("Answer refinement completed successfully")
+                return refined_response
+            except Exception as e:
+                error_msg = str(e)
+                logger.warning(f"Answer refinement failed: {error_msg}")
+                
+                # Log specific error types for debugging
+                if "llama_decode" in error_msg:
+                    logger.warning("Context window may be too full. Consider using --no-refine-answers for long conversations.")
+                elif "out of memory" in error_msg.lower():
+                    logger.warning("Out of memory during refinement. Try reducing context size or disabling refinement.")
+                
+                # Always return the original response
+                logger.info("Returning original unrefined response")
+                return final_response
         
         return final_response
     
