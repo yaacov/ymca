@@ -9,7 +9,7 @@ import sys
 import logging
 
 try:
-    from converter import ModelDownloader, LlamaCppConverter, parse_args, setup_logging
+    from bin.converter import ModelDownloader, LlamaCppConverter, parse_args, setup_logging
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
     print(f"Run: pip install -r requirements.txt")
