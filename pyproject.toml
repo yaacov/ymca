@@ -50,6 +50,7 @@ dependencies = [
     "click>=8.1.0",
     "pyyaml>=6.0.0",
     "rich>=13.0.0",
+    "prompt-toolkit>=3.0.0",
     
     # System monitoring and performance tracking
     "psutil>=5.9.0",

@@ -100,7 +100,7 @@ class ModelHandler:
         response = self.llm.create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             max_tokens=500,  # Increased to support detailed summaries (15-30 words each)
-            temperature=0.7,  # Balanced between creativity and consistency
+            temperature=0.2,  # Low temperature for technical accuracy and consistency
             stop=["\n\n", "Text:", "---", "Instructions:"],  # Stop tokens to prevent rambling
             repeat_penalty=1.1  # Reduce repetition
         )
@@ -156,7 +156,7 @@ Semantic summaries:"""
     
 
     
-    def generate(self, prompt: str, max_tokens: int = 100, temperature: float = 0.7) -> str:
+    def generate(self, prompt: str, max_tokens: int = 100, temperature: float = 0.2) -> str:
         """
         Generate text from prompt.
         
@@ -181,7 +181,7 @@ Semantic summaries:"""
         self, 
         messages: List[dict], 
         max_tokens: int = 200, 
-        temperature: float = 0.7,
+        temperature: float = 0.2,
         tools: Optional[List[dict]] = None,
         tool_choice: Optional[str] = None
     ) -> dict:

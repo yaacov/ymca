@@ -343,7 +343,7 @@ CRITICAL INSTRUCTIONS:
         self,
         user_message: str,
         max_iterations: int = 5,
-        temperature: float = 0.7,
+        temperature: float = 0.2,
         enable_tools: bool = True,
         enable_planning: bool = True,
         refine_answer: bool = True

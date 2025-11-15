@@ -143,7 +143,7 @@ class ToolSelector:
             response = self.model_handler.llm.create_chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
-                temperature=0.7,  # Increased for richer, more diverse summaries
+                temperature=0.2,  # Low temperature for accurate tool descriptions
                 stop=["\n\n", "Tool:", "---", "Instructions:"]
             )
             

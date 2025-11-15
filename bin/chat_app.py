@@ -17,6 +17,12 @@ from pathlib import Path
 # Add parent directory to path to import ymca package
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.styles import Style as PromptStyle
+
 from ymca.core.model_handler import ModelHandler
 from ymca.core.ui import (
     ThinkingSpinner, 
@@ -124,7 +130,7 @@ def print_section(title: str):
 
 
 def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
-    """Interactive chat mode."""
+    """Interactive chat mode with enhanced input."""
     print_section("INTERACTIVE CHAT")
     
     print("\n💬 Commands:")
@@ -135,6 +141,8 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
     print("  - 'quit'    - Exit (or Ctrl+C)")
     print("\n💡 Tips:")
     print("  - The assistant can search memory if data is loaded")
+    print("  - Use ↑/↓ arrow keys to navigate history")
+    print("  - Press Ctrl+R to search history")
     print("  - Run with --debug for detailed logging")
     print("  - Run with --verbose for full error traces")
     if refine_answers:
@@ -143,9 +151,29 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
         print("  - Answer refinement is DISABLED (use without --no-refine-answers to enable)")
     print("\n" + "=" * 70)
     
+    # Setup prompt session with history and auto-suggest
+    history_file = Path.home() / '.ymca_chat_history'
+    completer = WordCompleter(
+        ['clear', 'summary', 'export', 'quit', 'exit', 'q'],
+        ignore_case=True,
+        sentence=True
+    )
+    
+    prompt_style = PromptStyle.from_dict({
+        '': 'bold cyan',  # User input
+    })
+    
+    session = PromptSession(
+        history=FileHistory(str(history_file)),
+        auto_suggest=AutoSuggestFromHistory(),
+        completer=completer,
+        style=prompt_style,
+        enable_history_search=True
+    )
+    
     while True:
         try:
-            user_input = input("\n🧑 You: ").strip()
+            user_input = session.prompt("\n🧑 You: ").strip()
             
             if not user_input:
                 continue
