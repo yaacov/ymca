@@ -175,7 +175,6 @@ Comprehensive guides for all YMCA tools and features:
 ### Integration Guides
 - **[MTV MCP Setup](docs/mtv-mcp-setup.md)** - Configure Migration Toolkit for Virtualization MCP server
 
-
 ## Requirements
 
 - Python 3.9 or higher
