@@ -80,6 +80,9 @@ class ModelHandler:
         Uses the LLM to generate declarative statements that capture key information.
         These summaries are embedded and matched against user queries for retrieval.
         
+        If the initial generation produces fewer summaries than requested, this method
+        will automatically retry to generate additional ones (up to 2 attempts).
+        
         Args:
             chunk: Text chunk to generate summaries for
             num_questions: Number of semantic summaries to generate (default: 3)
@@ -88,36 +91,127 @@ class ModelHandler:
             List of generated semantic summaries (declarative statements)
             
         Raises:
-            ValueError: If parsing fails or not enough summaries generated
+            ValueError: If no summaries could be generated at all
             Exception: If LLM call fails
         """
-        prompt = self._build_question_prompt(chunk, num_questions)
+        all_summaries = []
+        max_attempts = 2
         
-        # Generate semantic summaries via LLM
-        # Note: max_tokens needs to be high enough for detailed summaries
-        # Detailed summaries (15-30 words) ~= 20-40 tokens each
-        # For 2-3 summaries: 40-120 tokens + overhead = ~150-250 tokens needed
-        response = self.llm.create_chat_completion(
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=500,  # Increased to support detailed summaries (15-30 words each)
-            temperature=0.2,  # Low temperature for technical accuracy and consistency
-            stop=["\n\n", "Text:", "---", "Instructions:"],  # Stop tokens to prevent rambling
-            repeat_penalty=1.1  # Reduce repetition
-        )
+        for attempt in range(max_attempts):
+            # Calculate how many more we need
+            remaining = num_questions - len(all_summaries)
+            if remaining <= 0:
+                break
+            
+            # Reset model state before each attempt to prevent context overflow
+            # Use deep clean on retries to ensure fresh state
+            try:
+                self.reset_state(deep_clean=(attempt > 0))
+            except Exception as e:
+                logger.warning(f"Failed to reset model state: {e}")
+            
+            # Generate summaries for the remaining count
+            prompt = self._build_question_prompt(chunk, remaining)
+            
+            try:
+                # Generate semantic summaries via LLM
+                # Note: max_tokens needs to be high enough for detailed summaries
+                # Detailed summaries (15-30 words) ~= 20-40 tokens each
+                # For 2-3 summaries: 40-120 tokens + overhead = ~150-250 tokens needed
+                response = self.llm.create_chat_completion(
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=500,  # Increased to support detailed summaries (15-30 words each)
+                    temperature=0.2 + (attempt * 0.1),  # Slightly increase temperature on retry for variety
+                    stop=["\n\n", "Text:", "---", "Instructions:"],  # Stop tokens to prevent rambling
+                    repeat_penalty=1.1
+                )
+                
+                # Extract and parse generated text
+                generated_text = response['choices'][0]['message']['content'].strip()
+                new_summaries = parse_questions_from_text(generated_text, remaining)
+                
+                if new_summaries:
+                    logger.debug(f"Attempt {attempt + 1}: Generated {len(new_summaries)} summaries")
+                    all_summaries.extend(new_summaries)
+                    
+                    # If we got fewer than requested, try again
+                    if len(all_summaries) < num_questions:
+                        logger.info(
+                            f"Got {len(all_summaries)}/{num_questions} summaries, "
+                            f"retrying for {num_questions - len(all_summaries)} more..."
+                        )
+                        # Brief pause before retry
+                        time.sleep(0.2)
+                    else:
+                        break
+                        
+            except ValueError as e:
+                # If parsing failed entirely, log and continue to retry
+                logger.warning(f"Attempt {attempt + 1} failed to parse summaries: {e}")
+                if attempt == max_attempts - 1:
+                    # Last attempt failed
+                    if all_summaries:
+                        logger.warning(f"Using {len(all_summaries)} summaries from previous attempts")
+                        break
+                    else:
+                        raise ValueError(f"Failed to generate any summaries after {max_attempts} attempts")
+            
+            except Exception as e:
+                # Handle LLM errors (like llama_decode failures)
+                error_msg = str(e)
+                logger.error(f"Attempt {attempt + 1} failed with error: {error_msg}")
+                
+                # If it's a llama_decode error, do aggressive cleanup
+                if "llama_decode" in error_msg or "returned -1" in error_msg:
+                    logger.warning("Context overflow detected, performing deep state reset...")
+                    try:
+                        self.reset_state(deep_clean=True)
+                        time.sleep(0.5)  # Longer pause after deep reset
+                    except Exception as reset_error:
+                        logger.error(f"Failed to reset after llama_decode error: {reset_error}")
+                
+                # If this was the last attempt, raise or return what we have
+                if attempt == max_attempts - 1:
+                    if all_summaries:
+                        logger.warning(
+                            f"Generation failed but using {len(all_summaries)} summaries "
+                            f"from previous attempts"
+                        )
+                        break
+                    else:
+                        raise Exception(
+                            f"Failed to generate any summaries after {max_attempts} attempts. "
+                            f"Last error: {error_msg}"
+                        )
+                else:
+                    logger.info(f"Retrying after error (attempt {attempt + 1}/{max_attempts})...")
+                    time.sleep(0.3)
         
-        # Extract and parse generated text (will raise ValueError if insufficient)
-        generated_text = response['choices'][0]['message']['content'].strip()
-        summaries = parse_questions_from_text(generated_text, num_questions)
+        # Ensure we don't return more than requested
+        if len(all_summaries) > num_questions:
+            logger.debug(f"Got {len(all_summaries)} summaries, trimming to {num_questions}")
+            all_summaries = all_summaries[:num_questions]
+        
+        # Validate we got at least one
+        if not all_summaries:
+            raise ValueError("Failed to generate any semantic summaries")
+        
+        # Log final result
+        if len(all_summaries) < num_questions:
+            logger.warning(
+                f"Only generated {len(all_summaries)}/{num_questions} summaries. "
+                f"Continuing with partial set."
+            )
         
         # Validate and log summary quality
-        for i, summary in enumerate(summaries, 1):
+        for i, summary in enumerate(all_summaries, 1):
             word_count = len(summary.split())
             if word_count < 10:
                 logger.warning(f"Summary {i} is very short ({word_count} words): {summary}")
             elif word_count > 40:
                 logger.warning(f"Summary {i} is very long ({word_count} words): {summary}")
         
-        return summaries
+        return all_summaries
     
     def _build_question_prompt(self, chunk: str, num_questions: int) -> str:
         """
@@ -238,7 +332,7 @@ Semantic summaries:"""
             logger.warning(f"Failed to reset model state before refinement: {e}")
         
         # Truncate very long responses to prevent context overflow
-        max_response_length = 2000  # chars (~500 tokens)
+        max_response_length = 8000  # chars (~2000 tokens) - increased to handle longer responses
         if len(raw_response) > max_response_length:
             logger.warning(f"Raw response too long ({len(raw_response)} chars), truncating to {max_response_length}")
             raw_response = raw_response[:max_response_length] + "\n\n[Response truncated for refinement]"

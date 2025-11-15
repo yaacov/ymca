@@ -57,7 +57,7 @@ class ChatRequest(BaseModel):
     enable_tools: bool = True
     enable_planning: bool = True
     max_iterations: int = 5
-    temperature: float = 0.2
+    temperature: float = 0.5
     refine_answer: bool = True
 
 

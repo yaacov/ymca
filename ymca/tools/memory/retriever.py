@@ -1,6 +1,7 @@
 """Memory retrieval logic."""
 
 import logging
+import time
 from typing import List, Dict, Optional
 import numpy as np
 
@@ -205,13 +206,52 @@ Expanded query:"""
         # Generate semantic summaries for EACH sub-chunk
         all_summaries = []
         for i, sub_chunk in enumerate(sub_chunks):
-            try:
-                # Reset model state before each sub-chunk to avoid decode errors
-                self.model_handler.reset_state()
-                summaries = self.model_handler.generate_questions(sub_chunk, num_questions=num_questions)
-                all_summaries.extend(summaries)
-            except Exception as e:
-                logger.warning(f"Semantic summary generation failed for sub-chunk {i+1}/{len(sub_chunks)}: {e}")
+            max_retries = 2
+            success = False
+            
+            for retry in range(max_retries):
+                try:
+                    # Reset model state before each sub-chunk to avoid decode errors
+                    # Use deep clean on retries
+                    self.model_handler.reset_state(deep_clean=(retry > 0))
+                    
+                    # Add brief pause between sub-chunks and retries
+                    if i > 0 or retry > 0:
+                        time.sleep(0.2 if retry == 0 else 0.5)
+                    
+                    summaries = self.model_handler.generate_questions(sub_chunk, num_questions=num_questions)
+                    all_summaries.extend(summaries)
+                    success = True
+                    break
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    logger.warning(
+                        f"Semantic summary generation failed for sub-chunk {i+1}/{len(sub_chunks)} "
+                        f"(attempt {retry+1}/{max_retries}): {error_msg}"
+                    )
+                    
+                    # If it's a decode error and not last retry, do aggressive cleanup
+                    if ("llama_decode" in error_msg or "returned -1" in error_msg) and retry < max_retries - 1:
+                        logger.info("Performing deep cleanup before retry...")
+                        try:
+                            self.model_handler.reset_state(deep_clean=True)
+                            time.sleep(0.5)
+                        except Exception as reset_error:
+                            logger.error(f"Failed to reset model state: {reset_error}")
+            
+            if not success:
+                logger.error(
+                    f"Failed to generate summaries for sub-chunk {i+1}/{len(sub_chunks)} "
+                    f"after {max_retries} attempts. Continuing with remaining sub-chunks."
+                )
         
+        if not all_summaries:
+            raise ValueError(
+                f"Failed to generate any summaries from {len(sub_chunks)} sub-chunks. "
+                f"This may indicate the chunk is too large or complex."
+            )
+        
+        logger.debug(f"Generated {len(all_summaries)} summaries from {len(sub_chunks)} sub-chunks")
         return all_summaries
 

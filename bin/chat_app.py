@@ -130,7 +130,7 @@ def print_section(title: str):
     print("=" * 70)
 
 
-def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
+def interactive_chat(chat: ChatAPI, refine_answers: bool = False, temperature: float = 0.5):
     """Interactive chat mode with enhanced input."""
     print_section("INTERACTIVE CHAT")
     
@@ -150,6 +150,7 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
         print("  - Answer refinement is ENABLED (responses are polished for clarity)")
     else:
         print("  - Answer refinement is DISABLED (use without --no-refine-answers to enable)")
+    print(f"  - Temperature: {temperature:.1f} (use --temperature to adjust creativity)")
     print("\n" + "=" * 70)
     
     # Setup prompt session with history and auto-suggest
@@ -212,7 +213,8 @@ def interactive_chat(chat: ChatAPI, refine_answers: bool = False):
                     user_input, 
                     enable_tools=True, 
                     enable_planning=True,
-                    refine_answer=refine_answers
+                    refine_answer=refine_answers,
+                    temperature=temperature
                 )
             
             # Print response with enhanced styling
@@ -232,8 +234,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run interactive chat (answer refinement enabled by default)
+  # Run interactive chat (answer refinement enabled, temperature 0.5 by default)
   python chat_app.py
+
+  # Adjust creativity (temperature: 0.0=focused, 1.0=creative, 2.0=very creative)
+  python chat_app.py --temperature 0.3   # More focused/deterministic
+  python chat_app.py --temperature 1.0   # More creative/varied
 
   # Disable answer refinement for faster responses
   python chat_app.py --no-refine-answers
@@ -328,6 +334,13 @@ Examples:
         "--no-refine-answers",
         action="store_true",
         help="Disable answer refinement step (default: enabled)"
+    )
+    
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.5,
+        help="LLM temperature for response generation (default: 0.5, range: 0.0-2.0). Lower = more focused, higher = more creative"
     )
     
     args = parser.parse_args()
@@ -471,10 +484,11 @@ Examples:
             print("Answer refinement: DISABLED")
         else:
             print("Answer refinement: ENABLED")
+        print(f"Temperature: {args.temperature:.1f} (creativity level)")
         print("=" * 70)
         
         # Run interactive chat
-        interactive_chat(chat, refine_answers=not args.no_refine_answers)
+        interactive_chat(chat, refine_answers=not args.no_refine_answers, temperature=args.temperature)
         
     except KeyboardInterrupt:
         print("\n\nInterrupted by user")
