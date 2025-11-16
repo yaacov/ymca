@@ -1,4 +1,4 @@
-# YMCA - Yaacov's MCP Agent
+# YMCA - Yaacov's MCp Agent
 
 YMCA (Yaacov's MCp Agent) is a local-first AI agent framework designed to run entirely on your own hardware. It leverages the Model Context Protocol (MCP) to connect to various tool servers while using small language models (SML) with aggressive quantization for efficient local inference. This approach ensures privacy, reduces costs, and eliminates dependencies on cloud services.
 
