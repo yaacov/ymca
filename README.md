@@ -107,39 +107,6 @@ CMAKE_ARGS="-DGGML_VULKAN=on" pip install --upgrade --force-reinstall llama-cpp-
 
 > **Note:** After installing with hardware acceleration, ensure your virtual environment is activated, then reinstall YMCA: `pip install -e .`
 
-### GPU Support
-
-YMCA attempts to use GPU acceleration by default but automatically falls back to CPU if unavailable:
-
-```bash
-# Default: Use GPU if available, CPU otherwise (both LLM and embeddings)
-ymca-chat
-ymca-web
-
-# Force CPU-only execution for LLM
-ymca-chat --gpu-layers 0
-ymca-web --gpu-layers 0
-
-# Partial GPU offloading (for limited VRAM)
-ymca-chat --gpu-layers 20
-
-# Control embedding model device (default: auto-detect - cuda > mps > cpu)
-ymca-chat --device cuda      # Force NVIDIA GPU
-ymca-chat --device mps       # Force Apple Silicon GPU
-ymca-chat --device cpu       # Force CPU
-ymca-web --device cuda
-```
-
-**Note:** The `--gpu-layers` flag controls GPU acceleration for the main LLM model, while the `--device` flag controls GPU acceleration for the embedding model used by the memory system. Both default to automatic GPU detection.
-
-## Quick Start
-
-> **Note:** Make sure your virtual environment is activated before running any YMCA commands:
-> ```bash
-> source venv/bin/activate  # On macOS/Linux
-> # venv\Scripts\activate   # On Windows
-> ```
-
 ### Chat Interface
 Start an interactive chat session with the agent:
 
@@ -191,25 +158,4 @@ ymca-chat --mcp-server "server1:cmd1" --mcp-server "server2:cmd2"
 
 See `docs/mtv-mcp-setup.md` for detailed MTV MCP server configuration.
 
-## Documentation
-
-Comprehensive guides for all YMCA tools and features:
-
-### Core Tools
-- **[Memory Tool](docs/memory-tool.md)** - Semantic memory system with storage, retrieval, and document loading
-- **[Web Interface](docs/web-interface.md)** - Browser-based chat interface with API documentation
-- **[Model Converter](docs/model-converter.md)** - Download and convert Hugging Face models to GGUF
-
-### Integration Guides
-- **[MTV MCP Setup](docs/mtv-mcp-setup.md)** - Configure Migration Toolkit for Virtualization MCP server
-
-## Requirements
-
-- Python 3.9 or higher
-- Local hardware (CPU or GPU)
-- Sufficient RAM based on model size (typically 4-16GB)
-
-## License
-
-MIT
 
